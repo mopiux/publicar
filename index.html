@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F1EC">
+<title>Publicar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,600;12..96,75..100,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --papel:#F2F1EC;
+    --panel:#FFFFFF;
+    --tinta:#16211B;
+    --tinta-suave:#5C6660;
+    --borde:#D6D3CB;
+    --verde:#15703A;
+    --verde-claro:#E4F0E7;
+    --azul:#1B4E8C;
+    --azul-claro:#E3EAF4;
+    --rojo:#9B2226;
+    --radio:14px;
+    --tap:64px;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+  html,body{margin:0;padding:0}
+
+  body{
+    background:var(--papel);
+    color:var(--tinta);
+    font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:19px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .marco{max-width:520px;margin:0 auto;padding:0 18px}
+
+  /* ---------- encabezado ---------- */
+  header{padding:26px 0 18px}
+  h1{
+    font-size:38px;
+    font-weight:800;
+    font-stretch:88%;
+    letter-spacing:-.02em;
+    margin:0;
+    line-height:1;
+  }
+  .bajada{margin:8px 0 0;color:var(--tinta-suave);font-size:17px}
+
+  /* ---------- selector de archivo ---------- */
+  .pozo{
+    position:relative;
+    width:100%;
+    min-height:230px;
+    background:var(--panel);
+    border:2px dashed var(--borde);
+    border-radius:var(--radio);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    cursor:pointer;
+    padding:0;
+    font:inherit;
+    color:inherit;
+    text-align:center;
+  }
+  .pozo:focus-visible{outline:4px solid var(--azul);outline-offset:3px}
+  .pozo.cargado{border-style:solid;border-color:var(--tinta);min-height:auto}
+
+  .pozo-vacio{display:flex;flex-direction:column;align-items:center;gap:14px;padding:34px 20px}
+  .cruz{
+    width:66px;height:66px;border-radius:50%;
+    background:var(--tinta);color:var(--panel);
+    display:grid;place-items:center;
+    font-size:40px;font-weight:400;line-height:1;
+    padding-bottom:4px;
+  }
+  .pozo-vacio span{font-size:21px;font-weight:600}
+  .pozo-vacio small{font-size:16px;color:var(--tinta-suave)}
+
+  .previa{display:block;width:100%;max-height:400px;object-fit:cover;background:#000}
+  .pie-previa{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:13px 16px;background:var(--panel);border-top:1px solid var(--borde);
+    font-size:16px;color:var(--tinta-suave);text-align:left;
+  }
+  .cambiar{font-weight:600;color:var(--azul);white-space:nowrap}
+
+  input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+  /* ---------- texto ---------- */
+  .bloque{margin-top:26px}
+  .rotulo{font-size:21px;font-weight:600;margin:0 0 10px}
+
+  textarea{
+    width:100%;
+    min-height:118px;
+    padding:15px;
+    font:inherit;
+    color:inherit;
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:var(--radio);
+    resize:vertical;
+  }
+  textarea:focus{outline:4px solid var(--azul);outline-offset:1px;border-color:var(--tinta)}
+
+  /* ---------- destinos ---------- */
+  .destinos{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+
+  .destino{
+    display:flex;align-items:center;gap:14px;
+    width:100%;min-height:var(--tap);
+    padding:12px 16px;
+    background:var(--panel);
+    border:2px solid var(--borde);
+    border-radius:var(--radio);
+    font:inherit;color:inherit;text-align:left;
+    cursor:pointer;
+  }
+  .destino:focus-visible{outline:4px solid var(--azul);outline-offset:2px}
+  .destino[aria-pressed=true]{border-color:var(--tinta);background:var(--verde-claro)}
+
+  .marca{
+    width:30px;height:30px;flex:none;
+    border:2px solid var(--borde);border-radius:8px;
+    display:grid;place-items:center;
+    background:var(--panel);
+  }
+  .destino[aria-pressed=true] .marca{background:var(--verde);border-color:var(--verde)}
+  .marca svg{width:19px;height:19px;stroke:var(--panel);stroke-width:3.4;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .destino[aria-pressed=true] .marca svg{opacity:1}
+
+  .logo{width:34px;height:34px;flex:none;border-radius:9px;display:grid;place-items:center;
+    color:#fff;font-weight:800;font-size:15px}
+  .nombre{font-weight:600;font-size:19px}
+
+  /* ---------- barra de acción ---------- */
+  .barra{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:var(--papel);
+    border-top:1px solid var(--borde);
+    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+  }
+  .barra-int{max-width:520px;margin:0 auto}
+
+  .principal{
+    width:100%;min-height:70px;
+    background:var(--verde);color:#fff;
+    border:none;border-radius:var(--radio);
+    font:inherit;font-size:23px;font-weight:800;font-stretch:88%;
+    cursor:pointer;
+  }
+  .principal:focus-visible{outline:4px solid var(--tinta);outline-offset:3px}
+  .principal.apagado{background:var(--borde);color:var(--tinta-suave)}
+  .aviso{margin:10px 0 0;text-align:center;font-size:16px;color:var(--tinta-suave);min-height:1.4em}
+
+  /* ---------- pantalla 2 ---------- */
+  .oculto{display:none !important}
+
+  .fila{
+    display:flex;align-items:center;gap:14px;
+    padding:16px;margin-bottom:10px;
+    background:var(--panel);
+    border:2px solid var(--borde);
+    border-radius:var(--radio);
+  }
+  .fila-txt{flex:1;min-width:0}
+  .fila-txt strong{display:block;font-size:19px;font-weight:600}
+  .fila-txt span{display:block;font-size:15px;color:var(--tinta-suave);margin-top:2px}
+
+  .accion{
+    flex:none;min-height:52px;padding:0 20px;
+    background:var(--azul);color:#fff;
+    border:none;border-radius:11px;
+    font:inherit;font-size:17px;font-weight:700;
+    cursor:pointer;
+  }
+  .accion:focus-visible{outline:4px solid var(--tinta);outline-offset:2px}
+
+  .fila.listo{border-color:var(--verde);background:var(--verde-claro)}
+  .fila.listo .accion{background:transparent;color:var(--verde);padding:0;font-weight:800}
+  .fila.falla{border-color:var(--rojo)}
+
+  .tilde{width:34px;height:34px;flex:none;border-radius:50%;background:var(--verde);
+    display:grid;place-items:center}
+  .tilde svg{width:20px;height:20px;stroke:#fff;stroke-width:3.4;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
+
+  .secundario{
+    width:100%;min-height:60px;margin-top:6px;
+    background:transparent;color:var(--tinta);
+    border:2px solid var(--tinta);border-radius:var(--radio);
+    font:inherit;font-size:19px;font-weight:700;cursor:pointer;
+  }
+
+  /* ---------- diagnóstico ---------- */
+  .diag-abrir{
+    display:block;width:100%;margin:30px 0 10px;padding:10px;
+    background:none;border:none;font:inherit;font-size:15px;
+    color:var(--tinta-suave);text-decoration:underline;cursor:pointer;
+  }
+  .diag{
+    background:var(--tinta);color:#D9E2DC;
+    border-radius:var(--radio);padding:18px;margin-bottom:20px;
+    font-size:15px;line-height:1.6;
+  }
+  .diag h2{margin:0 0 12px;font-size:17px;font-weight:700;color:#fff}
+  .diag dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}
+  .diag dt{color:#8FA398}
+  .diag dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-word}
+  .si{color:#7CD98F;font-weight:700}
+  .no{color:#F2A0A3;font-weight:700}
+
+  @media (prefers-reduced-motion:no-preference){
+    .fila,.destino,.marca{transition:border-color .18s,background-color .18s}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ PANTALLA 1 ══════════ -->
+<main class="marco" id="p1">
+  <header>
+    <h1>Publicar</h1>
+    <p class="bajada">Elegí la foto o el video una sola vez.</p>
+  </header>
+
+  <button type="button" class="pozo" id="pozo">
+    <span class="pozo-vacio" id="pozoVacio">
+      <span class="cruz">+</span>
+      <span>Elegir foto o video</span>
+      <small>Desde la galería o la cámara</small>
+    </span>
+    <span id="pozoLleno" class="oculto" style="width:100%">
+      <img id="previaImg" class="previa oculto" alt="">
+      <video id="previaVid" class="previa oculto" muted playsinline></video>
+      <span class="pie-previa">
+        <span id="datosArchivo"></span>
+        <span class="cambiar">Cambiar</span>
+      </span>
+    </span>
+  </button>
+  <input type="file" id="archivo" accept="image/*,video/*">
+
+  <section class="bloque">
+    <p class="rotulo">Texto</p>
+    <textarea id="texto" placeholder="Escribí lo que querés que diga."></textarea>
+  </section>
+
+  <section class="bloque">
+    <p class="rotulo">Dónde</p>
+    <ul class="destinos" id="destinos"></ul>
+  </section>
+
+  <button type="button" class="diag-abrir" id="diagAbrir">Diagnóstico técnico</button>
+  <div class="diag oculto" id="diag">
+    <h2>Compatibilidad del dispositivo</h2>
+    <dl id="diagDatos"></dl>
+  </div>
+</main>
+
+<!-- ══════════ PANTALLA 2 ══════════ -->
+<main class="marco oculto" id="p2">
+  <header>
+    <h1>Uno por uno</h1>
+    <p class="bajada">Tocá cada botón y elegí la aplicación que dice el renglón.</p>
+  </header>
+  <div id="filas"></div>
+  <button type="button" class="secundario" id="volver">Empezar de nuevo</button>
+</main>
+
+<!-- ══════════ BARRA ══════════ -->
+<div class="barra" id="barra">
+  <div class="barra-int">
+    <button type="button" class="principal apagado" id="publicar">Publicar</button>
+    <p class="aviso" id="aviso">Falta elegir una foto o un video.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- definición de destinos ---------- */
+  var REDES = [
+    { id:"wa", nombre:"WhatsApp",  app:"WhatsApp",  color:"#1E8E4E", sigla:"W",
+      pista:"Elegí WhatsApp y después \u201cMi estado\u201d", texto:true  },
+    { id:"fb", nombre:"Facebook",  app:"Facebook",  color:"#1B4E8C", sigla:"f",
+      pista:"Elegí Facebook y después \u201cHistoria\u201d",  texto:true  },
+    { id:"ig", nombre:"Instagram", app:"Instagram", color:"#8A2E6B", sigla:"IG",
+      pista:"El texto queda copiado para pegar",             texto:false },
+    { id:"tt", nombre:"TikTok",    app:"TikTok",    color:"#16211B", sigla:"TT",
+      pista:"Elegí TikTok y se abre el editor",              texto:true  }
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  var estado = {
+    archivo: null,
+    urlPrevia: null,
+    elegidas: { wa:true, fb:true, ig:true, tt:true },
+    hechas: {}
+  };
+
+  /* ---------- utilidades ---------- */
+  function tildeSVG(){
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
+  }
+  function pesoMB(bytes){ return (bytes / 1048576).toFixed(1) + " MB"; }
+
+  function puedeCompartirArchivos(){
+    if (!navigator.canShare || !navigator.share) return false;
+    try {
+      var f = new File(["x"], "prueba.txt", { type:"text/plain" });
+      return navigator.canShare({ files:[f] });
+    } catch(e){ return false; }
+  }
+
+  /* ---------- pantalla 1: destinos ---------- */
+  function pintarDestinos(){
+    var ul = $("destinos");
+    ul.innerHTML = "";
+    REDES.forEach(function(r){
+      var li = document.createElement("li");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "destino";
+      b.setAttribute("aria-pressed", String(!!estado.elegidas[r.id]));
+      b.innerHTML =
+        '<span class="marca">' + tildeSVG() + '</span>' +
+        '<span class="logo" style="background:' + r.color + '">' + r.sigla + '</span>' +
+        '<span class="nombre">' + r.nombre + '</span>';
+      b.addEventListener("click", function(){
+        estado.elegidas[r.id] = !estado.elegidas[r.id];
+        b.setAttribute("aria-pressed", String(estado.elegidas[r.id]));
+        revisar();
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+
+  /* ---------- selección de archivo ---------- */
+  $("pozo").addEventListener("click", function(){ $("archivo").click(); });
+
+  $("archivo").addEventListener("change", function(e){
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+
+    if (estado.urlPrevia) URL.revokeObjectURL(estado.urlPrevia);
+    estado.archivo = f;
+    estado.urlPrevia = URL.createObjectURL(f);
+
+    var img = $("previaImg"), vid = $("previaVid");
+    img.classList.add("oculto");
+    vid.classList.add("oculto");
+
+    if (f.type.indexOf("video/") === 0){
+      vid.src = estado.urlPrevia;
+      vid.classList.remove("oculto");
+      vid.preload = "metadata";
+    } else {
+      img.src = estado.urlPrevia;
+      img.classList.remove("oculto");
+    }
+
+    $("datosArchivo").textContent =
+      (f.type.indexOf("video/") === 0 ? "Video" : "Foto") + " · " + pesoMB(f.size);
+
+    $("pozoVacio").classList.add("oculto");
+    $("pozoLleno").classList.remove("oculto");
+    $("pozo").classList.add("cargado");
+
+    revisar();
+    pintarDiagnostico();
+  });
+
+  /* ---------- validación ---------- */
+  function seleccionadas(){
+    return REDES.filter(function(r){ return estado.elegidas[r.id]; });
+  }
+
+  function revisar(){
+    var btn = $("publicar"), aviso = $("aviso");
+    if (!estado.archivo){
+      btn.classList.add("apagado");
+      aviso.textContent = "Falta elegir una foto o un video.";
+    } else if (seleccionadas().length === 0){
+      btn.classList.add("apagado");
+      aviso.textContent = "Falta marcar al menos una red.";
+    } else {
+      btn.classList.remove("apagado");
+      aviso.textContent = "Se va a publicar en " + seleccionadas().length + " lugares.";
+    }
+  }
+
+  /* ---------- pasar a pantalla 2 ---------- */
+  $("publicar").addEventListener("click", function(){
+    if (!estado.archivo){ $("archivo").click(); return; }
+    if (seleccionadas().length === 0){ return; }
+
+    estado.hechas = {};
+    pintarFilas();
+    $("p1").classList.add("oculto");
+    $("p2").classList.remove("oculto");
+    $("barra").classList.add("oculto");
+    window.scrollTo(0, 0);
+  });
+
+  $("volver").addEventListener("click", function(){
+    $("p2").classList.add("oculto");
+    $("p1").classList.remove("oculto");
+    $("barra").classList.remove("oculto");
+    window.scrollTo(0, 0);
+  });
+
+  /* ---------- pantalla 2: filas ---------- */
+  function pintarFilas(){
+    var cont = $("filas");
+    cont.innerHTML = "";
+
+    seleccionadas().forEach(function(r){
+      var fila = document.createElement("div");
+      fila.className = "fila";
+      fila.id = "fila-" + r.id;
+
+      var hecha = estado.hechas[r.id] === "ok";
+
+      var marca = document.createElement("span");
+      if (hecha){
+        marca.className = "tilde";
+        marca.innerHTML = tildeSVG();
+      } else {
+        marca.className = "logo";
+        marca.style.background = r.color;
+        marca.style.width = "34px";
+        marca.style.height = "34px";
+        marca.textContent = r.sigla;
+      }
+
+      var txt = document.createElement("div");
+      txt.className = "fila-txt";
+      txt.innerHTML = "<strong>" + r.nombre + "</strong><span>" +
+        (hecha ? "Listo" : r.pista) + "</span>";
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "accion";
+      btn.textContent = hecha ? "Repetir" : "Abrir";
+      btn.addEventListener("click", function(){ compartir(r); });
+
+      if (hecha) fila.classList.add("listo");
+      fila.appendChild(marca);
+      fila.appendChild(txt);
+      fila.appendChild(btn);
+      cont.appendChild(fila);
+    });
+  }
+
+  /* ---------- el share sheet ----------
+     Sin await antes de navigator.share: iOS exige que la llamada
+     salga directamente del gesto del usuario.                     */
+  function compartir(r){
+    var caption = $("texto").value.trim();
+    var datos = { files: [estado.archivo] };
+    if (r.texto && caption) datos.text = caption;
+
+    if (!r.texto && caption && navigator.clipboard){
+      navigator.clipboard.writeText(caption).catch(function(){});
+    }
+
+    if (!navigator.canShare || !navigator.canShare(datos)){
+      marcarFalla(r, "Este navegador no puede compartir este archivo");
+      return;
+    }
+
+    navigator.share(datos).then(function(){
+      estado.hechas[r.id] = "ok";
+      pintarFilas();
+    }).catch(function(err){
+      if (err && err.name === "AbortError") return;   // canceló, no es error
+      marcarFalla(r, err && err.message ? err.message : "No se pudo abrir");
+    });
+  }
+
+  function marcarFalla(r, msg){
+    var fila = $("fila-" + r.id);
+    if (!fila) return;
+    fila.classList.add("falla");
+    var span = fila.querySelector(".fila-txt span");
+    if (span) span.textContent = msg;
+  }
+
+  /* ---------- diagnóstico ---------- */
+  $("diagAbrir").addEventListener("click", function(){
+    var d = $("diag");
+    d.classList.toggle("oculto");
+    if (!d.classList.contains("oculto")) pintarDiagnostico();
+  });
+
+  function pintarDiagnostico(){
+    var filas = [];
+    function add(k, v, ok){
+      var clase = ok === true ? "si" : (ok === false ? "no" : "");
+      filas.push("<dt>" + k + "</dt><dd class='" + clase + "'>" + v + "</dd>");
+    }
+
+    var tieneShare  = !!navigator.share;
+    var tieneCanSh  = !!navigator.canShare;
+    var archivosOK  = puedeCompartirArchivos();
+
+    add("navigator.share", tieneShare ? "sí" : "no", tieneShare);
+    add("canShare", tieneCanSh ? "sí" : "no", tieneCanSh);
+    add("Archivos", archivosOK ? "sí" : "no", archivosOK);
+    add("HTTPS", window.isSecureContext ? "sí" : "no", window.isSecureContext);
+    add("Portapapeles", navigator.clipboard ? "sí" : "no", !!navigator.clipboard);
+
+    if (estado.archivo){
+      var f = estado.archivo;
+      var esteOK = false;
+      try { esteOK = !!(navigator.canShare && navigator.canShare({ files:[f] })); } catch(e){}
+      add("Tipo", f.type || "desconocido");
+      add("Peso", pesoMB(f.size));
+      add("Este archivo", esteOK ? "compartible" : "rechazado", esteOK);
+    } else {
+      add("Archivo", "todavía sin elegir");
+    }
+
+    add("Pantalla", window.innerWidth + "×" + window.innerHeight);
+    add("navegador", navigator.userAgent);
+
+    $("diagDatos").innerHTML = filas.join("");
+  }
+
+  /* ---------- manifest para instalar en pantalla de inicio ---------- */
+  try {
+    var manifest = {
+      name: "Publicar",
+      short_name: "Publicar",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#F2F1EC",
+      theme_color: "#F2F1EC",
+      icons: [{
+        src: "data:image/svg+xml," + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+          '<rect width="512" height="512" rx="112" fill="#15703A"/>' +
+          '<path d="M256 128v256M128 256h256" stroke="#fff" stroke-width="56" stroke-linecap="round"/>' +
+          '</svg>'),
+        sizes: "512x512",
+        type: "image/svg+xml",
+        purpose: "any"
+      }]
+    };
+    var link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = URL.createObjectURL(
+      new Blob([JSON.stringify(manifest)], { type:"application/manifest+json" }));
+    document.head.appendChild(link);
+  } catch(e){}
+
+  /* ---------- arranque ---------- */
+  pintarDestinos();
+  revisar();
+  pintarDiagnostico();
+})();
+</script>
+</body>
+</html>
