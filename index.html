@@ -597,15 +597,12 @@ input::placeholder{color:var(--texto-tenue)}
    Estilo propio, tipo pizarra de madera. No comparte look con
    la caja a propósito: esta es la cara del local al cliente. */
 .cliente{
-  --madera:#9A6A38; --veta:#7E5227; --tinta:#140D07;
-  --naranja:#F2883B; --crema:#FCF4E8; --panel:rgba(20,13,7,.52);
+  --tinta:#140D07; --sobre:#FCF4E8; --naranja:#F2883B; --crema:#FCF4E8;
+  --panel:rgba(20,13,7,.52); --linea:rgba(252,244,232,.26); --tenue:var(--tenue);
+  --foto-tam:58px; --foto-radio:50%;
   display:flex;flex-direction:column;height:100vh;height:100dvh;
   max-width:560px;margin:0 auto;color:var(--crema);
-  background:
-    repeating-linear-gradient(91deg, rgba(0,0,0,.16) 0 2px, transparent 2px 74px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.032) 0 1px, transparent 1px 19px),
-    repeating-linear-gradient(89deg, rgba(0,0,0,.05) 0 3px, transparent 3px 11px),
-    linear-gradient(168deg, #A87540, var(--madera) 40%, var(--veta));
+  background:var(--fondo-carta);
 }
 .cliente[hidden]{display:none}
 
@@ -616,12 +613,12 @@ input::placeholder{color:var(--texto-tenue)}
   text-shadow:0 2px 0 rgba(0,0,0,.35);
 }
 .cl-cab .mesa-et{
-  font-size:15px;color:rgba(252,244,232,.72);margin-top:5px;
+  font-size:15px;color:var(--tenue);margin-top:5px;
   letter-spacing:.02em;
 }
 .cl-cab .btn{
   min-height:44px;padding:0 16px;font-size:16px;margin-left:auto;flex:0 0 auto;
-  background:var(--tinta);color:var(--crema);border:none;border-radius:999px;font-weight:600;
+  background:var(--tinta);color:var(--sobre);border:none;border-radius:999px;font-weight:600;
 }
 .cl-cab .btn:hover{background:#000}
 
@@ -631,8 +628,8 @@ input::placeholder{color:var(--texto-tenue)}
 }
 .cl-rubros::-webkit-scrollbar{display:none}
 .cliente .chip{
-  border:1px solid rgba(252,244,232,.32);border-radius:999px;
-  color:rgba(252,244,232,.85);background:rgba(20,13,7,.22);
+  border:1px solid var(--linea);border-radius:999px;
+  color:var(--tenue);background:color-mix(in srgb, var(--tinta) 22%, transparent);
   font-size:15px;padding:8px 15px;min-height:40px;white-space:nowrap;
 }
 .cliente .chip[aria-pressed="true"]{
@@ -653,19 +650,19 @@ input::placeholder{color:var(--texto-tenue)}
 }
 .cl-plato{
   display:flex;gap:14px;width:100%;text-align:left;align-items:center;
-  padding:11px 0;border-bottom:1px solid rgba(252,244,232,.12);color:inherit;
+  padding:11px 0;border-bottom:1px solid var(--linea);color:inherit;
 }
 .cl-plato:last-child{border-bottom:none}
 .foto{
-  width:58px;height:58px;flex:0 0 auto;border-radius:50%;overflow:hidden;
-  position:relative;border:3px solid var(--tinta);background:var(--veta);
+  width:var(--foto-tam);height:var(--foto-tam);flex:0 0 auto;border-radius:var(--foto-radio);overflow:hidden;
+  position:relative;border:3px solid var(--tinta);background:var(--panel);
 }
 .foto img{width:100%;height:100%;object-fit:cover;display:block}
 .foto .plato-ph{position:absolute;inset:0}
 .cl-plato .info{flex:1;min-width:0;display:flex;align-items:baseline;gap:9px}
 .cl-plato .info b{font-size:16.5px;font-weight:400;line-height:1.25}
 .cl-plato .info .guia{
-  flex:1;min-width:14px;border-bottom:1px dotted rgba(252,244,232,.3);
+  flex:1;min-width:14px;border-bottom:1px dotted var(--linea);
   transform:translateY(-4px);
 }
 .cl-plato .info .pr{
@@ -674,7 +671,7 @@ input::placeholder{color:var(--texto-tenue)}
 .cl-plato .r{display:none}
 .cl-plato .mas{
   align-self:center;width:40px;height:40px;flex:0 0 auto;border-radius:50%;
-  border:2px solid rgba(252,244,232,.4);font-size:22px;color:var(--crema);
+  border:2px solid var(--linea);font-size:22px;color:var(--crema);
   display:grid;place-items:center;line-height:1;
 }
 .cl-plato .mas.tiene{
@@ -699,25 +696,25 @@ input::placeholder{color:var(--texto-tenue)}
   position:fixed;left:0;right:0;bottom:0;z-index:24;max-width:560px;margin:0 auto;
   display:flex;align-items:center;gap:12px;padding:13px 18px;
   padding-bottom:calc(13px + env(safe-area-inset-bottom));
-  background:var(--tinta);border-top:none;font-size:16px;color:var(--crema);
+  background:var(--tinta);border-top:none;font-size:16px;color:var(--sobre);
 }
 .cl-barra .plata{
   font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;
   margin-left:auto;font-variant-numeric:tabular-nums;
 }
-.cliente .cl-barra .btn{min-height:44px;padding:0 17px;border-radius:999px;border-color:rgba(252,244,232,.3)}
+.cliente .cl-barra .btn{min-height:44px;padding:0 17px;border-radius:999px;border-color:var(--linea)}
 .cliente .cl-barra .btn.lleno{background:var(--naranja);color:var(--tinta);border-color:var(--naranja)}
 
 /* Vista "Mi mesa", con la misma piel */
 .cliente .cb-tit{color:var(--naranja);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
-.cliente .cb-tit::after{background:rgba(252,244,232,.22)}
-.cliente .cb-fila{border-bottom-color:rgba(252,244,232,.14)}
+.cliente .cb-tit::after{background:var(--linea)}
+.cliente .cb-fila{border-bottom-color:var(--linea)}
 .cliente .cb-fila .c,.cliente .cb-fila .t b,.cliente .cb-fila .p{color:var(--crema)}
-.cliente .cb-cuentas div{color:rgba(252,244,232,.8)}
-.cliente .cb-cuentas div.fuerte{color:var(--crema);border-top-color:rgba(252,244,232,.25)}
-.cliente .nada p,.cliente .nada small{color:rgba(252,244,232,.72)}
+.cliente .cb-cuentas div{color:var(--tenue)}
+.cliente .cb-cuentas div.fuerte{color:var(--crema);border-top-color:var(--linea)}
+.cliente .nada p,.cliente .nada small{color:var(--tenue)}
 .cliente .botonera .btn{
-  background:var(--tinta);border-color:var(--tinta);color:var(--crema);
+  background:var(--tinta);border-color:var(--tinta);color:var(--sobre);
   border-radius:999px;min-height:50px;
 }
 .cliente .botonera .btn[disabled]{opacity:.45}
@@ -730,6 +727,16 @@ input::placeholder{color:var(--texto-tenue)}
   padding:14px 16px;margin-bottom:16px;font-size:16px;color:#8FD8A8;
 }
 
+
+
+/* Variantes que elige el dueño desde el panel */
+.cliente.sin-fotos .foto{display:none}
+.cliente.rubro-linea .cl-rubro{
+  background:none;color:var(--crema);padding:0 0 6px;border-bottom:3px solid var(--naranja);
+  border-radius:0;margin-bottom:6px;
+}
+.cliente.rubro-linea .cl-panel{margin-top:0;padding-top:6px;background:transparent;padding-left:0;padding-right:0}
+.cl-cab .logo{max-height:54px;max-width:210px;width:auto;display:block}
 
 /* ── Hoja de códigos QR ───────────────────────────────────── */
 .qrs{display:flex;flex-direction:column;height:100vh;height:100dvh}
@@ -800,7 +807,67 @@ input::placeholder{color:var(--texto-tenue)}
 .dn-campo label{display:block;font-size:15px;color:var(--texto-medio);margin-bottom:6px}
 .dn-campo input{margin:0;width:100%}
 
+.dn-opciones{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:6px}
+.dn-opciones button{
+  min-height:48px;padding:0 18px;border:1px solid var(--borde);border-radius:9px;
+  font-size:16px;color:var(--texto-medio);
+}
+.dn-opciones button:hover{background:var(--superficie-alta);color:var(--texto)}
+.dn-opciones button[aria-pressed="true"]{background:var(--texto);color:var(--fondo);border-color:var(--texto);font-weight:600}
+.dn-opciones button.tono{width:52px;padding:0;border-width:2px;border-color:var(--borde)}
+.dn-opciones button.tono[aria-pressed="true"]{border-color:var(--texto)}
+.dn-opciones button.tono span{display:block;width:100%;height:100%}
+.dn-tablero{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:8px}
+.dn-tarjeta{border:1px solid var(--borde);border-radius:12px;padding:14px 16px;background:var(--superficie)}
+.dn-tarjeta .et{font-size:15px;color:var(--texto-tenue);display:block}
+.dn-tarjeta b{
+  font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:700;
+  display:block;line-height:1.05;margin-top:3px;font-variant-numeric:tabular-nums;
+}
+.dn-tarjeta small{font-size:14px;color:var(--texto-tenue)}
+
+.dn-barrita{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:16px}
+.dn-barrita .et{width:150px;flex:0 0 auto;color:var(--texto-medio)}
+.dn-barrita .et.larga{width:230px;color:var(--texto);font-size:16px}
+.dn-barrita .via{flex:1;height:10px;border-radius:999px;background:var(--borde-suave);overflow:hidden;min-width:40px}
+.dn-barrita .via span{display:block;height:100%;background:var(--ocupada);border-radius:999px}
+.dn-barrita .val{
+  width:96px;text-align:right;flex:0 0 auto;font-family:"Barlow Condensed",sans-serif;
+  font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;
+}
+.dn-barrita .pct{width:96px;text-align:right;flex:0 0 auto;color:var(--texto-tenue);font-size:15px}
+
+.dn-arqueo{border:1px solid var(--borde);border-radius:12px;padding:14px 16px;max-width:520px}
+.dn-arqueo > div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;color:var(--texto-medio);font-size:16px}
+.dn-arqueo .num{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.dn-arqueo .fuerte{color:var(--texto);font-weight:600;border-top:1px solid var(--borde-suave);margin-top:6px;padding-top:9px}
+.dn-arqueo .entrada{display:flex;align-items:center;gap:12px;margin-top:10px}
+.dn-arqueo .entrada label{flex:1;color:var(--texto-medio)}
+.dn-arqueo .entrada input{
+  margin:0;width:150px;height:46px;text-align:right;
+  font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;
+}
+.dn-arqueo .pendiente{color:var(--texto-tenue);font-size:15px;padding-top:8px}
+.dn-arqueo .listo{color:var(--servida);font-weight:600;border-top:1px solid var(--borde-suave);margin-top:8px;padding-top:9px}
+.dn-arqueo .falla{color:var(--peligro);font-weight:600;border-top:1px solid var(--borde-suave);margin-top:8px;padding-top:9px}
+
+.dn-registro{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--borde-suave)}
+.dn-registro .q{
+  font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:700;
+  min-width:30px;color:var(--peligro);
+}
+.dn-registro .d{flex:1;min-width:0}
+.dn-registro .d b{font-size:16.5px;font-weight:500;display:block}
+.dn-registro .d small{font-size:14.5px;color:var(--texto-tenue)}
+.dn-registro .h{color:var(--texto-tenue);font-size:15px;font-variant-numeric:tabular-nums}
+.dn-registro .m{
+  font-family:"Barlow Condensed",sans-serif;font-size:19px;width:100px;text-align:right;
+  color:var(--texto-medio);font-variant-numeric:tabular-nums;
+}
+
 @media (max-width:860px){
+  .dn-barrita .et,.dn-barrita .et.larga{width:120px;font-size:15px}
+  .dn-barrita .val,.dn-barrita .pct{width:74px;font-size:16px}
   .dn-fila{grid-template-columns:1fr 1fr;gap:8px;padding:13px 0}
   .dn-fila.cab{display:none}
   .dn-fila > *:first-child{grid-column:1/-1}
@@ -1374,6 +1441,53 @@ let CUENTAS = [
     ]}
 ];
 MESAS.find(m => m.id === 10).pendienteLimpieza = true;
+
+/* Turno abierto y cuentas ya cobradas esta noche, para que el cierre
+   de caja tenga con qué trabajar desde el arranque. */
+const TURNO = { abierto:haceMin(197), fondoInicial:5000000, contado:null, cerrado:null };
+
+let CERRADAS = [
+  { id:'z1', mesas:[1], comensales:2, mozo:'Nico', abierta:haceMin(180), cerrada:haceMin(126),
+    descuento:{monto:0,motivo:''},
+    pagos:[{metodo:'Efectivo', monto:3120000, propina:0, confirmado:true}],
+    comandas:[{ id:'zk1', destino:'coc', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(176), items:[
+      { id:'zi1', pid:'p1', cant:1, precio:1950000, acl:'', estado:'entregado' },
+      { id:'zi2', pid:'p5', cant:1, precio:890000, acl:'', estado:'entregado' }]},
+      { id:'zk2', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(176), items:[
+      { id:'zi3', pid:'p8', cant:2, precio:420000, acl:'', estado:'entregado' }]}]},
+
+  { id:'z2', mesas:[6], comensales:5, mozo:'Rita', abierta:haceMin(165), cerrada:haceMin(94),
+    descuento:{monto:1000000, motivo:'El plato que salió mal'},
+    pagos:[{metodo:'Tarjeta', monto:5760000, propina:576000, confirmado:true},
+           {metodo:'Efectivo', monto:4000000, propina:0, confirmado:true}],
+    comandas:[{ id:'zk3', destino:'par', ronda:1, estado:'enviada', origen:'mozo', enviada:haceMin(160), items:[
+      { id:'zi4', pid:'p3', cant:2, precio:2680000, acl:'', estado:'entregado' },
+      { id:'zi5', pid:'p23', cant:1, precio:2380000, acl:'', estado:'entregado' },
+      { id:'zi6', pid:'p4', cant:1, precio:1150000, acl:'', estado:'anulado',
+        motivo:'Salió mal', anuladoPor:'Rita', anuladoEn:haceMin(150) }]},
+      { id:'zk4', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(160), items:[
+      { id:'zi7', pid:'p11', cant:1, precio:1400000, acl:'', estado:'entregado' },
+      { id:'zi8', pid:'p7', cant:1, precio:950000, acl:'', estado:'entregado' }]}]},
+
+  { id:'z3', mesas:[13], comensales:2, mozo:'Nico', abierta:haceMin(120), cerrada:haceMin(61),
+    descuento:{monto:0,motivo:''},
+    pagos:[{metodo:'Transferencia', monto:2840000, propina:0, confirmado:true}],
+    comandas:[{ id:'zk5', destino:'coc', ronda:1, estado:'enviada', origen:'qr', enviada:haceMin(115), items:[
+      { id:'zi9', pid:'p2', cant:6, precio:280000, acl:'', estado:'entregado' },
+      { id:'zi10', pid:'p12', cant:1, precio:820000, acl:'', estado:'entregado' }]},
+      { id:'zk6', destino:'bar', ronda:1, estado:'enviada', origen:'qr', enviada:haceMin(115), items:[
+      { id:'zi11', pid:'p9', cant:1, precio:350000, acl:'', estado:'entregado' }]}]},
+
+  { id:'z4', mesas:[11], comensales:4, mozo:'Rita', abierta:haceMin(88), cerrada:haceMin(24),
+    descuento:{monto:0,motivo:''},
+    pagos:[{metodo:'Efectivo', monto:7340000, propina:500000, confirmado:true}],
+    comandas:[{ id:'zk7', destino:'coc', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(84), items:[
+      { id:'zi12', pid:'p1', cant:2, precio:1950000, acl:'', estado:'entregado' },
+      { id:'zi13', pid:'p6', cant:1, precio:1620000, acl:'', estado:'entregado' },
+      { id:'zi14', pid:'p10', cant:2, precio:650000, acl:'', estado:'entregado' }]},
+      { id:'zk8', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(84), items:[
+      { id:'zi15', pid:'p53', cant:1, precio:780000, acl:'', estado:'entregado' }]}]}
+];
 
 /* ── Estado de la interfaz ─────────────────────────────────── */
 const ui = {
@@ -2524,6 +2638,8 @@ function cerrarMesa(){
   const c = cob.cuenta;
   const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
   c.mesas.forEach(id => MESAS.find(m => m.id === id).pendienteLimpieza = true);
+  c.cerrada = Date.now();
+  CERRADAS.push(c);
   CUENTAS = CUENTAS.filter(x => x !== c);
   cob.cuenta = null;
   document.getElementById('vistaCobro').hidden = true;
@@ -2582,8 +2698,13 @@ function abrirCliente(numero){
   document.getElementById('vistaSalon').hidden = true;
   ['vistaPedido','vistaCocina','vistaCobro','vistaQR'].forEach(v => document.getElementById(v).hidden = true);
   document.getElementById('vistaCliente').hidden = false;
-  document.getElementById('clNombre').textContent = LOCAL.nombre;
+  const h1 = document.getElementById('clNombre');
+  h1.innerHTML = APARIENCIA.logo
+    ? `<img class="logo" src="${LOCAL.carpetaFotos}logo.png" alt="${LOCAL.nombre}"
+        onerror="this.replaceWith(document.createTextNode('${LOCAL.nombre.replace(/'/g,"")}'))">`
+    : LOCAL.nombre;
   document.getElementById('clMesa').textContent = 'Mesa ' + m.numero + ' · ' + LOCAL.ciudad;
+  aplicarApariencia();
   pintarCliente();
   return true;
 }
@@ -2742,7 +2863,7 @@ document.getElementById('btnImprimirQR').onclick = () => window.print();
 /* ═══════════════════════════════════════════════════════════
    Panel del dueño (5.7, parte de carta y configuración)
    ═══════════════════════════════════════════════════════════ */
-const dn = { solapa:'carta', busca:'', rubro:'todos' };
+const dn = { solapa:'caja', busca:'', rubro:'todos' };
 
 function abrirDueno(){
   ['vistaPedido','vistaCocina','vistaCobro','vistaQR','vistaCliente'].forEach(v =>
@@ -2760,12 +2881,14 @@ document.getElementById('btnVolverDeDueno').onclick = () => {
 
 function pintarDueno(){
   document.getElementById('dnSolapas').innerHTML =
-    [['carta','La carta'],['mesas','Mesas y sectores'],['local','Datos del local']]
+    [['caja','Cierre de caja'],['carta','La carta'],['apariencia','Apariencia'],['mesas','Mesas y sectores'],['local','Datos del local']]
       .map(([k,t]) => `<button class="chip" data-s="${k}" aria-pressed="${dn.solapa===k}">${t}</button>`).join('');
   document.getElementById('dnSolapas').querySelectorAll('.chip').forEach(b =>
     b.onclick = () => { dn.solapa = b.dataset.s; pintarDueno(); });
 
-  if(dn.solapa === 'carta') pintarDnCarta();
+  if(dn.solapa === 'caja') pintarDnCaja();
+  else if(dn.solapa === 'carta') pintarDnCarta();
+  else if(dn.solapa === 'apariencia') pintarDnApariencia();
   else if(dn.solapa === 'mesas') pintarDnMesas();
   else pintarDnLocal();
 }
@@ -2898,6 +3021,8 @@ function descargarCarta(){
 
 const LOCAL = ${JSON.stringify(LOCAL, null, 2)};
 
+const APARIENCIA = ${JSON.stringify(APARIENCIA)};
+
 const RUBROS = ${JSON.stringify(RUBROS)};
 
 const CARTA = [
@@ -2991,6 +3116,252 @@ function pintarDnLocal(){
       document.getElementById('dnLocal').textContent = LOCAL.nombre;
       document.title = LOCAL.nombre;
     });
+}
+
+/* ── Cierre de caja del día ───────────────────────────────── */
+function pintarDnCaja(){
+  const ventas = CERRADAS.reduce((s,c) => s + aCobrar(c), 0);
+  const prop = CERRADAS.reduce((s,c) => s + propinas(c), 0);
+  const porMetodo = {};
+  CERRADAS.forEach(c => c.pagos.forEach(p => porMetodo[p.metodo] = (porMetodo[p.metodo]||0) + p.monto + p.propina));
+  const efectivo = porMetodo['Efectivo'] || 0;
+  const esperado = TURNO.fondoInicial + efectivo;
+  const dif = TURNO.contado === null ? null : TURNO.contado - esperado;
+  const abiertas = CUENTAS.reduce((s,c) => s + consumido(c), 0);
+  const ticket = CERRADAS.length ? Math.round(ventas / CERRADAS.length) : 0;
+
+  const vendidos = {};
+  CERRADAS.forEach(c => itemsCobrables(c).forEach(i => {
+    const p = prod(i.pid); if(!p) return;
+    vendidos[i.pid] = vendidos[i.pid] || { nom:p.nom, cant:0, plata:0 };
+    vendidos[i.pid].cant += i.cant;
+    vendidos[i.pid].plata += i.cant * i.precio;
+  }));
+  const rank = Object.values(vendidos).sort((a,b) => b.cant - a.cant);
+  const tope = rank.length ? rank[0].cant : 1;
+
+  const anulados = [];
+  CERRADAS.concat(CUENTAS).forEach(c => c.comandas.forEach(k => k.items.forEach(i => {
+    if(i.estado === 'anulado') anulados.push({...i, mesas:c.mesas});
+  })));
+  const descuentos = CERRADAS.concat(CUENTAS)
+    .filter(c => c.descuento && c.descuento.monto)
+    .map(c => ({...c.descuento, mesas:c.mesas}));
+
+  document.getElementById('dnBarra').innerHTML = `
+    <span style="color:var(--texto-medio);font-size:16px">
+      Turno abierto a las ${new Date(TURNO.abierto).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false})}
+      · fondo inicial ${plata(TURNO.fondoInicial)}</span>
+    <div class="sep"></div>
+    <button class="btn" id="dnImprimirCierre">Imprimir cierre</button>
+    <button class="btn lleno" id="dnCerrarCaja">Cerrar la caja</button>`;
+  document.getElementById('dnImprimirCierre').onclick = imprimirCierre;
+  document.getElementById('dnCerrarCaja').onclick = () => {
+    if(CUENTAS.length){ tostar('Todavía hay ' + CUENTAS.length + ' mesas abiertas. Cobralas antes de cerrar.'); return; }
+    if(TURNO.contado === null){ tostar('Contá el efectivo de la caja antes de cerrar.'); return; }
+    tostar('Caja cerrada. En el sistema real acá queda el arqueo firmado y ya no se puede editar la noche.');
+  };
+
+  const tarjeta = (et, val, extra) => `<div class="dn-tarjeta">
+    <span class="et">${et}</span><b class="num">${val}</b>${extra?`<small>${extra}</small>`:''}</div>`;
+
+  let html = `<div class="dn-tablero">
+    ${tarjeta('Vendido', plata(ventas), CERRADAS.length + ' mesas cobradas')}
+    ${tarjeta('Ticket promedio', plata(ticket), '')}
+    ${tarjeta('Propinas', plata(prop), 'no entran a la caja')}
+    ${tarjeta('Sin cobrar', plata(abiertas), CUENTAS.length + ' mesas abiertas')}
+  </div>
+
+  <div class="dn-rubro">Cómo pagaron</div>
+  ${['Efectivo','Tarjeta','Transferencia'].map(m => {
+    const v = porMetodo[m] || 0;
+    const pct = ventas+prop ? Math.round(v*100/(ventas+prop)) : 0;
+    return `<div class="dn-barrita">
+      <span class="et">${m}</span>
+      <span class="via"><span style="width:${pct}%"></span></span>
+      <span class="val num">${plata(v)}</span><span class="pct">${pct}%</span></div>`;
+  }).join('')}
+
+  <div class="dn-rubro">Arqueo de caja</div>
+  <div class="dn-arqueo">
+    <div><span>Fondo inicial</span><span class="num">${plata(TURNO.fondoInicial)}</span></div>
+    <div><span>Cobrado en efectivo</span><span class="num">${plata(efectivo)}</span></div>
+    <div class="fuerte"><span>Tendría que haber</span><span class="num">${plata(esperado)}</span></div>
+    <div class="entrada"><label for="contado">Efectivo contado</label>
+      <input type="number" id="contado" step="100" placeholder="0"
+        value="${TURNO.contado===null?'':Math.round(TURNO.contado/100)}"></div>
+    ${dif === null ? `<div class="pendiente">Contá la caja para ver la diferencia.</div>`
+      : `<div class="${dif===0?'listo':'falla'}">
+          <span>${dif===0?'Cuadra exacto':(dif>0?'Sobra':'Falta')}</span>
+          <span class="num">${dif===0?'✓':plata(Math.abs(dif))}</span></div>`}
+  </div>
+
+  <div class="dn-rubro">Lo que más salió</div>
+  ${rank.slice(0,8).map(r => `<div class="dn-barrita">
+    <span class="et larga">${r.nom}</span>
+    <span class="via"><span style="width:${Math.round(r.cant*100/tope)}%"></span></span>
+    <span class="val num">${r.cant}</span><span class="pct">${plata(r.plata)}</span></div>`).join('')}
+  ${rank.length > 8 ? `<div class="dn-rubro">Lo que menos salió</div>
+    ${rank.slice(-3).reverse().map(r => `<div class="dn-barrita">
+      <span class="et larga">${r.nom}</span>
+      <span class="via"><span style="width:${Math.round(r.cant*100/tope)}%"></span></span>
+      <span class="val num">${r.cant}</span><span class="pct">${plata(r.plata)}</span></div>`).join('')}` : ''}
+
+  <div class="dn-rubro">Anulaciones y descuentos · ${anulados.length + descuentos.length}</div>`;
+
+  if(!anulados.length && !descuentos.length){
+    html += `<div class="nada"><p>No hubo ninguno esta noche.</p>
+      <small>Cada anulación y cada descuento queda acá con nombre, motivo y hora.</small></div>`;
+  } else {
+    anulados.forEach(i => {
+      const p = prod(i.pid);
+      html += `<div class="dn-registro">
+        <span class="q">${i.cant}</span>
+        <span class="d"><b>${p ? p.nom : 'plato'}</b>
+          <small>Mesa ${i.mesas.map(id => (MESAS.find(m=>m.id===id)||{numero:'?'}).numero).join('+')} ·
+          anuló ${i.anuladoPor} · ${i.motivo}</small></span>
+        <span class="h num">${i.anuladoEn ? new Date(i.anuladoEn).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}) : ''}</span>
+        <span class="m num">${plata(i.cant*i.precio)}</span></div>`;
+    });
+    descuentos.forEach(d => {
+      html += `<div class="dn-registro">
+        <span class="q">%</span>
+        <span class="d"><b>Descuento</b><small>Mesa ${d.mesas.map(id => (MESAS.find(m=>m.id===id)||{numero:'?'}).numero).join('+')} · ${d.motivo}</small></span>
+        <span class="h"></span><span class="m num">−${plata(d.monto)}</span></div>`;
+    });
+  }
+
+  const cont = document.getElementById('dnCuerpo');
+  cont.innerHTML = html;
+  const inp = document.getElementById('contado');
+  inp.onchange = e => {
+    const v = e.target.value.trim();
+    TURNO.contado = v === '' ? null : Math.max(0, Math.round(Number(v)||0)) * 100;
+    pintarDnCaja();
+  };
+}
+
+function imprimirCierre(){
+  const ventas = CERRADAS.reduce((s,c) => s + aCobrar(c), 0);
+  const prop = CERRADAS.reduce((s,c) => s + propinas(c), 0);
+  const porMetodo = {};
+  CERRADAS.forEach(c => c.pagos.forEach(p => porMetodo[p.metodo] = (porMetodo[p.metodo]||0) + p.monto + p.propina));
+  const efectivo = porMetodo['Efectivo'] || 0;
+  const esperado = TURNO.fondoInicial + efectivo;
+  const linea = (n2,v) => `<div class="l"><span class="n">${n2}</span><span>${v}</span></div>`;
+  document.getElementById('impresion').innerHTML = `
+    <h1>Cierre de caja</h1>
+    <div class="sub">${LOCAL.nombre}<br>
+      ${new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short',hour12:false})}</div>
+    <hr>
+    ${linea('Mesas cobradas', CERRADAS.length)}
+    ${linea('Vendido', plata(ventas))}
+    ${linea('Propinas', plata(prop))}
+    ${linea('Ticket promedio', plata(CERRADAS.length ? Math.round(ventas/CERRADAS.length) : 0))}
+    <hr>
+    ${Object.keys(porMetodo).map(m => linea(m, plata(porMetodo[m]))).join('')}
+    <hr>
+    ${linea('Fondo inicial', plata(TURNO.fondoInicial))}
+    ${linea('Efectivo esperado', plata(esperado))}
+    ${linea('Efectivo contado', TURNO.contado === null ? '________' : plata(TURNO.contado))}
+    <div class="l tot"><span class="n">DIFERENCIA</span><span>${
+      TURNO.contado === null ? '________' : plata(TURNO.contado - esperado)}</span></div>
+    <hr>
+    <div class="legal">Documento interno.<br>No es comprobante fiscal.<br><br>
+      Firma: ______________________</div>`;
+  window.print();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Apariencia de la carta del cliente
+   Opciones cerradas: el dueño elige de una lista y no puede
+   romper la pantalla. El botón de pedir no se mueve.
+   ═══════════════════════════════════════════════════════════ */
+const TEMAS = {
+  madera:{ nombre:'Tabla de madera', acento:'#F2883B',
+    v:{ '--fondo-carta':`repeating-linear-gradient(91deg, rgba(0,0,0,.16) 0 2px, transparent 2px 74px),
+          repeating-linear-gradient(90deg, rgba(255,255,255,.032) 0 1px, transparent 1px 19px),
+          repeating-linear-gradient(89deg, rgba(0,0,0,.05) 0 3px, transparent 3px 11px),
+          linear-gradient(168deg, #A87540, #9A6A38 40%, #7E5227)`,
+        '--tinta':'#140D07', '--sobre':'#FCF4E8', '--crema':'#FCF4E8',
+        '--panel':'rgba(20,13,7,.52)', '--linea':'rgba(252,244,232,.26)', '--tenue':'rgba(252,244,232,.72)' }},
+
+  pizarra:{ nombre:'Pizarra', acento:'#E9C46A',
+    v:{ '--fondo-carta':`radial-gradient(circle at 22% 18%, rgba(255,255,255,.05) 0 40%, transparent 41%),
+          radial-gradient(circle at 78% 72%, rgba(255,255,255,.04) 0 34%, transparent 35%),
+          linear-gradient(165deg, #2E3330, #232725 55%, #1B1F1D)`,
+        '--tinta':'#0D100E', '--sobre':'#EEF2EF', '--crema':'#EEF2EF',
+        '--panel':'rgba(0,0,0,.3)', '--linea':'rgba(238,242,239,.22)', '--tenue':'rgba(238,242,239,.66)' }},
+
+  papel:{ nombre:'Papel claro', acento:'#C2410C',
+    v:{ '--fondo-carta':`repeating-linear-gradient(0deg, rgba(0,0,0,.022) 0 1px, transparent 1px 28px),
+          linear-gradient(170deg, #FAF5EA, #F2EADA)`,
+        '--tinta':'#241D14', '--sobre':'#FAF5EA', '--crema':'#241D14',
+        '--panel':'rgba(255,255,255,.6)', '--linea':'rgba(36,29,20,.18)', '--tenue':'rgba(36,29,20,.62)' }},
+
+  noche:{ nombre:'Noche', acento:'#C9A227',
+    v:{ '--fondo-carta':'linear-gradient(165deg, #1A1D24, #12141A)',
+        '--tinta':'#0A0C10', '--sobre':'#F2F4F8', '--crema':'#F2F4F8',
+        '--panel':'rgba(255,255,255,.05)', '--linea':'rgba(242,244,248,.16)', '--tenue':'rgba(242,244,248,.6)' }},
+
+  campo:{ nombre:'Campo', acento:'#E8A33D',
+    v:{ '--fondo-carta':`radial-gradient(circle at 80% 10%, rgba(255,255,255,.06) 0 30%, transparent 31%),
+          linear-gradient(160deg, #3D5343, #2C3D31 60%, #24322A)`,
+        '--tinta':'#141C17', '--sobre':'#F3F7F0', '--crema':'#F3F7F0',
+        '--panel':'rgba(0,0,0,.26)', '--linea':'rgba(243,247,240,.2)', '--tenue':'rgba(243,247,240,.66)' }}
+};
+const ACENTOS = ['#F2883B','#E9C46A','#C2410C','#4CAE77','#4C93DC','#C0446A'];
+
+const APARIENCIA = { tema:'madera', acento:'#F2883B', fotos:'chicas', forma:'redonda', rubro:'pastilla', logo:false };
+
+function aplicarApariencia(){
+  const el = document.getElementById('vistaCliente');
+  const t = TEMAS[APARIENCIA.tema] || TEMAS.madera;
+  Object.keys(t.v).forEach(k => el.style.setProperty(k, t.v[k]));
+  el.style.setProperty('--naranja', APARIENCIA.acento);
+  el.style.setProperty('--foto-tam', APARIENCIA.fotos === 'grandes' ? '84px' : '58px');
+  el.style.setProperty('--foto-radio', APARIENCIA.forma === 'cuadrada' ? '12px' : '50%');
+  el.classList.toggle('sin-fotos', APARIENCIA.fotos === 'ninguna');
+  el.classList.toggle('rubro-linea', APARIENCIA.rubro === 'linea');
+}
+
+function pintarDnApariencia(){
+  document.getElementById('dnBarra').innerHTML = `
+    <span style="color:var(--texto-medio);font-size:16px">Los cambios se ven al instante en el celular del cliente.</span>
+    <div class="sep"></div>
+    <button class="btn lleno" id="dnVerCarta">Ver la carta</button>`;
+  document.getElementById('dnVerCarta').onclick = () => abrirCliente(MESAS[0].numero);
+
+  const grupo = (tit, clave, ops, extra) => `<div class="dn-rubro">${tit}</div>
+    <div class="dn-opciones">${ops.map(([v,et]) =>
+      `<button data-set="${clave}" data-val="${v}" aria-pressed="${APARIENCIA[clave]===v}">${et}</button>`).join('')}
+    </div>${extra||''}`;
+
+  document.getElementById('dnCuerpo').innerHTML = `
+    <p class="dn-nota">El sistema se adapta a la identidad del local, pero no todo se mueve.
+    El botón de pedir queda fijo abajo a propósito: es donde llega el pulgar sin acomodar la mano,
+    y correrlo hace que la gente pida menos.</p>
+
+    ${grupo('Estilo de la carta','tema', Object.keys(TEMAS).map(k => [k, TEMAS[k].nombre]))}
+
+    <div class="dn-rubro">Color de acento</div>
+    <div class="dn-opciones">${ACENTOS.map(c =>
+      `<button class="tono" data-set="acento" data-val="${c}" aria-pressed="${APARIENCIA.acento===c}"
+        style="background:${c}"><span></span></button>`).join('')}</div>
+
+    ${grupo('Fotos de los platos','fotos',[['ninguna','Sin fotos'],['chicas','Chicas'],['grandes','Grandes']])}
+    ${grupo('Forma de la foto','forma',[['redonda','Redonda'],['cuadrada','Cuadrada']])}
+    ${grupo('Títulos de rubro','rubro',[['pastilla','Pastilla'],['linea','Línea simple']])}
+    ${grupo('Encabezado','logo',[[false,'Nombre escrito'],[true,'Logo del local']],
+      `<p class="dn-nota" style="margin-top:8px">Para usar el logo, poné el archivo
+       <b>logo.png</b> dentro de la carpeta <b>fotos</b>. Si no está, se muestra el nombre.</p>`)}`;
+
+  document.getElementById('dnCuerpo').querySelectorAll('[data-set]').forEach(b => b.onclick = () => {
+    const v = b.dataset.val;
+    APARIENCIA[b.dataset.set] = v === 'true' ? true : v === 'false' ? false : v;
+    aplicarApariencia();
+    pintarDnApariencia();
+  });
 }
 
 /* ── Modal genérico ─────────────────────────────────────── */
@@ -3092,6 +3463,7 @@ setTimeout(() => {
   document.getElementById('nombreLocal').textContent = LOCAL.nombre;
   document.getElementById('nombreLocal2').textContent = LOCAL.nombre;
   document.title = LOCAL.nombre;
+  aplicarApariencia();
 
   const q = new URLSearchParams(location.search);
   const num = Number(q.get('m')), tok = q.get('t');
