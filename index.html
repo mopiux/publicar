@@ -752,6 +752,61 @@ input::placeholder{color:var(--texto-tenue)}
   .qr-carta{border:1px solid #999;break-inside:avoid;page-break-inside:avoid}
 }
 .qr-aclara{font-size:16px;color:var(--texto-medio);margin-bottom:16px;max-width:66ch;line-height:1.45}
+/* ── Panel del dueño ──────────────────────────────────────── */
+.dueno{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.dueno[hidden]{display:none}
+.dn-solapas{display:flex;gap:9px;padding:12px 18px;flex:0 0 auto;border-bottom:1px solid var(--borde-suave)}
+.dn-solapas .chip{font-size:17px;padding:10px 18px;min-height:46px}
+.dn-barra{
+  display:flex;gap:9px;align-items:center;padding:13px 18px;flex-wrap:wrap;
+  border-bottom:1px solid var(--borde-suave);flex:0 0 auto;
+}
+.dn-barra input.busq{
+  margin:0;height:44px;padding:0 14px;font-size:16px;width:210px;
+  background:var(--fondo);border:1px solid var(--borde);border-radius:9px;color:var(--texto);
+}
+.dn-barra .sep{flex:1}
+.dn-cuerpo{flex:1;overflow-y:auto;padding:16px 18px 28px}
+.dn-nota{font-size:15px;color:var(--texto-tenue);margin-bottom:16px;max-width:76ch;line-height:1.5}
+
+.dn-fila{
+  display:grid;grid-template-columns:1fr 150px 120px 130px auto auto;
+  gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--borde-suave);
+}
+.dn-fila.cab{
+  border-bottom:1px solid var(--borde);padding-bottom:8px;
+  font-size:14px;color:var(--texto-tenue);text-transform:uppercase;letter-spacing:.05em;
+}
+.dn-fila.mesas{grid-template-columns:110px 1fr 1fr auto}
+.dn-fila input,.dn-fila select{
+  margin:0;height:44px;padding:0 11px;font-size:16px;width:100%;
+  background:var(--fondo);color:var(--texto);border:1px solid var(--borde);border-radius:8px;
+}
+.dn-fila input[type=number]{text-align:right;font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600}
+.dn-fila.agotado input,.dn-fila.agotado select{opacity:.5}
+.dn-marca{
+  min-height:44px;padding:0 14px;border:1px solid var(--borde);border-radius:8px;
+  font-size:15px;color:var(--texto-medio);white-space:nowrap;
+}
+.dn-marca.si{background:var(--peligro);border-color:var(--peligro);color:#fff;font-weight:600}
+.dn-borrar{width:44px;height:44px;border:1px solid var(--borde);border-radius:8px;color:var(--texto-tenue);font-size:19px}
+.dn-borrar:hover{border-color:var(--peligro);color:var(--peligro)}
+.dn-rubro{
+  font-size:15px;font-weight:600;color:var(--texto-tenue);margin:22px 0 6px;
+  display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.05em;
+}
+.dn-rubro::after{content:"";flex:1;height:1px;background:var(--borde-suave)}
+.dn-campo{margin-bottom:16px;max-width:460px}
+.dn-campo label{display:block;font-size:15px;color:var(--texto-medio);margin-bottom:6px}
+.dn-campo input{margin:0;width:100%}
+
+@media (max-width:860px){
+  .dn-fila{grid-template-columns:1fr 1fr;gap:8px;padding:13px 0}
+  .dn-fila.cab{display:none}
+  .dn-fila > *:first-child{grid-column:1/-1}
+  .dn-fila.mesas{grid-template-columns:1fr 1fr}
+  .dn-barra input.busq{width:100%}
+}
 </style>
 </head>
 <body>
@@ -769,6 +824,7 @@ input::placeholder{color:var(--texto-tenue)}
     <button class="red" id="btnCocina" title="Ver la pantalla de cocina">
       <span id="txtCocina">Cocina</span>
     </button>
+    <button class="red" id="btnDueno" title="Panel del dueño"><span>Dueño</span></button>
     <div class="usuario"><i>MC</i><span>Marta · Cajera</span></div>
     <div class="reloj" id="reloj">21:47</div>
   </header>
@@ -781,6 +837,18 @@ input::placeholder{color:var(--texto-tenue)}
 
   <div class="acciones" id="acciones"></div>
 </div>
+
+<section class="dueno" id="vistaDueno" hidden>
+  <header class="barra">
+    <button class="volver" id="btnVolverDeDueno">← Salón</button>
+    <div class="local"><b>Panel del dueño</b><span id="dnLocal">Comedor La Estación</span></div>
+    <div class="sep"></div>
+    <div class="reloj" id="relojDueno">21:47</div>
+  </header>
+  <nav class="dn-solapas" id="dnSolapas"></nav>
+  <div class="dn-barra" id="dnBarra"></div>
+  <div class="dn-cuerpo" id="dnCuerpo"></div>
+</section>
 
 <section class="cliente" id="vistaCliente" hidden>
   <header class="cl-cab">
@@ -1851,7 +1919,7 @@ function pintarCarta(){
   let html = '';
   if(ped.busca){
     const q = sinTildes(ped.busca);
-    const hallados = CARTA.filter(p => sinTildes(p.nom).includes(q));
+    const hallados = CARTA.filter(p => !p.baja && sinTildes(p.nom).includes(q));
     html = hallados.length
       ? `<div class="rubro-tit">${hallados.length} resultado${hallados.length>1?'s':''}</div>
          <div class="rejilla">${hallados.map(tarjetaPlato).join('')}</div>`
@@ -1860,7 +1928,7 @@ function pintarCarta(){
   } else {
     const rubros = ped.rubro === 'todos' ? RUBROS : [ped.rubro];
     rubros.forEach(r => {
-      const lista = CARTA.filter(p => p.rubro === r);
+      const lista = CARTA.filter(p => p.rubro === r && !p.baja);
       if(!lista.length) return;
       html += `<div class="rubro-tit">${r}</div>
         <div class="rejilla">${lista.map(tarjetaPlato).join('')}</div>`;
@@ -2042,6 +2110,7 @@ function irACocina(){
   pintarCocina();
 }
 document.getElementById('btnCocina').onclick = irACocina;
+document.getElementById('btnDueno').onclick = abrirDueno;
 document.getElementById('btnVolverDeCocina').onclick = () => {
   document.getElementById('vistaCocina').hidden = true;
   document.getElementById('vistaSalon').hidden = false;
@@ -2575,7 +2644,7 @@ function pintarCliente(){
   const rubrosAMostrar = cli.rubro === 'todos' ? RUBROS : [cli.rubro];
   let html = '';
   rubrosAMostrar.forEach(r => {
-    const lista = CARTA.filter(p => p.rubro === r);
+    const lista = CARTA.filter(p => p.rubro === r && !p.baja);
     if(!lista.length) return;
     html += `<div class="cl-rubro">${r}</div><div class="cl-panel">`;
     lista.forEach(p => {
@@ -2670,6 +2739,260 @@ document.getElementById('btnVolverDeQR').onclick = () => {
 };
 document.getElementById('btnImprimirQR').onclick = () => window.print();
 
+/* ═══════════════════════════════════════════════════════════
+   Panel del dueño (5.7, parte de carta y configuración)
+   ═══════════════════════════════════════════════════════════ */
+const dn = { solapa:'carta', busca:'', rubro:'todos' };
+
+function abrirDueno(){
+  ['vistaPedido','vistaCocina','vistaCobro','vistaQR','vistaCliente'].forEach(v =>
+    document.getElementById(v).hidden = true);
+  document.getElementById('vistaSalon').hidden = true;
+  document.getElementById('vistaDueno').hidden = false;
+  document.getElementById('dnLocal').textContent = LOCAL.nombre;
+  pintarDueno();
+}
+document.getElementById('btnVolverDeDueno').onclick = () => {
+  document.getElementById('vistaDueno').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  pintar();
+};
+
+function pintarDueno(){
+  document.getElementById('dnSolapas').innerHTML =
+    [['carta','La carta'],['mesas','Mesas y sectores'],['local','Datos del local']]
+      .map(([k,t]) => `<button class="chip" data-s="${k}" aria-pressed="${dn.solapa===k}">${t}</button>`).join('');
+  document.getElementById('dnSolapas').querySelectorAll('.chip').forEach(b =>
+    b.onclick = () => { dn.solapa = b.dataset.s; pintarDueno(); });
+
+  if(dn.solapa === 'carta') pintarDnCarta();
+  else if(dn.solapa === 'mesas') pintarDnMesas();
+  else pintarDnLocal();
+}
+
+/* ── La carta ─────────────────────────────────────────────── */
+function pintarDnCarta(){
+  document.getElementById('dnBarra').innerHTML = `
+    <input type="search" class="busq" id="dnBusca" placeholder="Buscar plato" value="${dn.busca}" autocomplete="off">
+    <select id="dnRubro" style="height:44px;padding:0 11px;font-size:16px;background:var(--fondo);color:var(--texto);border:1px solid var(--borde);border-radius:9px">
+      <option value="todos">Todos los rubros</option>
+      ${RUBROS.map(r => `<option value="${r}" ${dn.rubro===r?'selected':''}>${r}</option>`).join('')}
+    </select>
+    <div class="sep"></div>
+    <button class="btn" id="dnAjustar">Ajustar precios</button>
+    <button class="btn" id="dnBajar">Descargar la carta</button>
+    <button class="btn lleno" id="dnNuevo">Plato nuevo</button>`;
+
+  const bu = document.getElementById('dnBusca');
+  bu.oninput = e => { dn.busca = e.target.value; pintarDnCartaLista(); };
+  document.getElementById('dnRubro').onchange = e => { dn.rubro = e.target.value; pintarDnCartaLista(); };
+  document.getElementById('dnNuevo').onclick = nuevoPlato;
+  document.getElementById('dnAjustar').onclick = ajustarPrecios;
+  document.getElementById('dnBajar').onclick = descargarCarta;
+
+  pintarDnCartaLista();
+}
+
+function pintarDnCartaLista(){
+  const q = sinTildes(dn.busca.trim());
+  const visibles = CARTA.filter(p => !p.baja
+    && (dn.rubro === 'todos' || p.rubro === dn.rubro)
+    && (!q || sinTildes(p.nom).includes(q)));
+
+  const cabecera = `<div class="dn-fila cab">
+    <span>Plato</span><span>Rubro</span><span>Se prepara en</span>
+    <span style="text-align:right">Precio</span><span>Stock</span><span></span></div>`;
+
+  const fila = p => `<div class="dn-fila ${p.agotado?'agotado':''}">
+    <input type="text" value="${p.nom.replace(/"/g,'&quot;')}" data-nom="${p.id}">
+    <select data-rubro="${p.id}">${RUBROS.map(r => `<option ${p.rubro===r?'selected':''}>${r}</option>`).join('')}</select>
+    <select data-dest="${p.id}">${Object.keys(DESTINOS).map(d =>
+      `<option value="${d}" ${p.destino===d?'selected':''}>${DESTINOS[d]}</option>`).join('')}</select>
+    <input type="number" value="${Math.round(p.precio/100)}" step="100" min="0" data-precio="${p.id}">
+    <button class="dn-marca ${p.agotado?'si':''}" data-agot="${p.id}">${p.agotado?'Agotado':'Hay'}</button>
+    <button class="dn-borrar" data-baja="${p.id}" aria-label="Sacar de la carta">✕</button>
+  </div>`;
+
+  let html = `<p class="dn-nota">Los cambios se ven al instante en la carta del cliente y en la caja.
+    El precio se escribe en pesos, sin puntos. Sacar un plato de la carta no borra las cuentas viejas:
+    lo que ya se cobró queda con el precio que tenía ese día.</p>`;
+
+  if(!visibles.length){
+    html += `<div class="nada"><p>Ningún plato coincide.</p><small>Probá con otra palabra o cambiá el rubro.</small></div>`;
+  } else if(dn.rubro === 'todos' && !q){
+    RUBROS.forEach(r => {
+      const lista = visibles.filter(p => p.rubro === r);
+      if(!lista.length) return;
+      html += `<div class="dn-rubro">${r} · ${lista.length}</div>${cabecera}${lista.map(fila).join('')}`;
+    });
+  } else {
+    html += cabecera + visibles.map(fila).join('');
+  }
+  const cont = document.getElementById('dnCuerpo');
+  cont.innerHTML = html;
+
+  cont.querySelectorAll('[data-nom]').forEach(i =>
+    i.onchange = e => { prod(i.dataset.nom).nom = e.target.value.trim() || 'Sin nombre'; });
+  cont.querySelectorAll('[data-precio]').forEach(i =>
+    i.onchange = e => { prod(i.dataset.precio).precio = Math.max(0, Math.round(Number(e.target.value)||0)) * 100; });
+  cont.querySelectorAll('[data-rubro]').forEach(i =>
+    i.onchange = e => { prod(i.dataset.rubro).rubro = e.target.value; pintarDnCartaLista(); });
+  cont.querySelectorAll('[data-dest]').forEach(i =>
+    i.onchange = e => { prod(i.dataset.dest).destino = e.target.value; });
+  cont.querySelectorAll('[data-agot]').forEach(b => b.onclick = () => {
+    const p = prod(b.dataset.agot);
+    p.agotado = !p.agotado;
+    pintarDnCartaLista();
+    tostar(p.agotado ? p.nom + ' queda marcado como agotado.' : p.nom + ' vuelve a la carta.');
+  });
+  cont.querySelectorAll('[data-baja]').forEach(b => b.onclick = () => {
+    const p = prod(b.dataset.baja);
+    abrirModal({
+      titulo:'Sacar de la carta', texto:'“' + p.nom + '” deja de aparecer. Las cuentas viejas no cambian.',
+      opciones:['Ya no lo hacemos','Estaba cargado dos veces','Es de temporada','Otro'],
+      boton:'Sacar', peligro:true,
+      alConfirmar(){ p.baja = true; pintarDnCartaLista(); tostar('Sacado de la carta.'); }
+    });
+  });
+}
+
+function nuevoPlato(){
+  const id = 'n' + (++idSeq);
+  CARTA.push({ id, nom:'Plato nuevo', precio:0, destino:'coc',
+    rubro: dn.rubro === 'todos' ? RUBROS[0] : dn.rubro });
+  dn.busca = '';
+  pintarDnCarta();
+  setTimeout(() => {
+    const i = document.querySelector(`[data-nom="${id}"]`);
+    if(i){ i.scrollIntoView({block:'center'}); i.focus(); i.select(); }
+  }, 30);
+}
+
+function ajustarPrecios(){
+  abrirModal({
+    titulo:'Ajustar precios',
+    texto:'Sube o baja de una vez todos los precios ' +
+      (dn.rubro === 'todos' ? 'de la carta' : 'del rubro ' + dn.rubro) +
+      '. Redondea a los 100 pesos más cercanos.',
+    opciones:['+5%','+8%','+10%','+15%','−5%','−10%'],
+    pin:true,
+    boton:'Aplicar',
+    alConfirmar(v){
+      const pct = Number(v.replace('−','-').replace('%','').replace('+',''));
+      const tocados = CARTA.filter(p => !p.baja && (dn.rubro === 'todos' || p.rubro === dn.rubro));
+      tocados.forEach(p => {
+        p.precio = Math.max(0, Math.round(p.precio * (1 + pct/100) / 10000) * 10000);
+      });
+      pintarDnCartaLista();
+      tostar(tocados.length + ' precios ajustados ' + v + '. Las cuentas abiertas mantienen el precio viejo.');
+    }
+  });
+}
+
+function descargarCarta(){
+  const linea = p => `  { id:'${p.id}', nom:${JSON.stringify(p.nom)}, precio:${p.precio}, ` +
+    `destino:'${p.destino}', rubro:${JSON.stringify(p.rubro)}${p.agotado?', agotado:true':''} }`;
+  const txt =
+`/* Carta de ${LOCAL.nombre}, exportada el ${new Date().toLocaleString('es-AR',{hour12:false})}.
+   Pegá estos tres bloques dentro de salon.html, reemplazando los que ya están. */
+
+const LOCAL = ${JSON.stringify(LOCAL, null, 2)};
+
+const RUBROS = ${JSON.stringify(RUBROS)};
+
+const CARTA = [
+${CARTA.filter(p => !p.baja).map(linea).join(',\n')}
+];
+
+const MESAS = [
+${MESAS.map(m => `  { id:${m.id}, numero:${m.numero}, capacidad:${m.capacidad}, sector:${JSON.stringify(m.sector)} }`).join(',\n')}
+];
+`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], {type:'text/plain;charset=utf-8'}));
+  a.download = 'carta-' + LOCAL.nombre.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  tostar('Carta descargada. Pegala en el archivo para que quede fija.');
+}
+
+/* ── Mesas ────────────────────────────────────────────────── */
+function pintarDnMesas(){
+  document.getElementById('dnBarra').innerHTML = `
+    <span style="color:var(--texto-medio);font-size:16px">${MESAS.length} mesas en ${[...new Set(MESAS.map(m=>m.sector))].length} sectores</span>
+    <div class="sep"></div>
+    <button class="btn lleno" id="dnMesaNueva">Agregar mesa</button>`;
+  document.getElementById('dnMesaNueva').onclick = () => {
+    const num = Math.max(0, ...MESAS.map(m => m.numero)) + 1;
+    MESAS.push({ id:Math.max(...MESAS.map(m=>m.id))+1, numero:num, capacidad:4,
+      sector:MESAS[0].sector, pendienteLimpieza:false });
+    pintarDnMesas();
+    tostar('Mesa ' + num + ' agregada. Su código QR ya está listo.');
+  };
+
+  const sectores = [...new Set(MESAS.map(m => m.sector))];
+  let html = `<p class="dn-nota">Cada mesa tiene su propio código QR, que se genera solo a partir del número.
+    Si cambiás el número de una mesa, hay que imprimir de nuevo su código.</p>
+    <div class="dn-fila mesas cab"><span>Número</span><span>Lugares</span><span>Sector</span><span></span></div>`;
+
+  MESAS.forEach(m => {
+    const ocupada = !!cuentaDe(m.id);
+    html += `<div class="dn-fila mesas">
+      <input type="number" value="${m.numero}" min="1" data-mnum="${m.id}">
+      <input type="number" value="${m.capacidad}" min="1" data-mcap="${m.id}">
+      <input type="text" value="${m.sector}" list="sectores" data-msec="${m.id}">
+      <button class="dn-borrar" data-mbaja="${m.id}" ${ocupada?'disabled style="opacity:.3"':''}
+        aria-label="Quitar mesa">✕</button>
+    </div>`;
+  });
+  html += `<datalist id="sectores">${sectores.map(s => `<option value="${s}">`).join('')}</datalist>`;
+
+  const cont = document.getElementById('dnCuerpo');
+  cont.innerHTML = html;
+  const mesa = id => MESAS.find(m => m.id === Number(id));
+  cont.querySelectorAll('[data-mnum]').forEach(i => i.onchange = e => {
+    const n = Math.max(1, Math.round(Number(e.target.value)||1));
+    if(MESAS.some(m => m.numero === n && m.id !== Number(i.dataset.mnum))){
+      tostar('Ya hay una mesa con ese número.'); pintarDnMesas(); return;
+    }
+    mesa(i.dataset.mnum).numero = n; pintarDnMesas();
+  });
+  cont.querySelectorAll('[data-mcap]').forEach(i =>
+    i.onchange = e => { mesa(i.dataset.mcap).capacidad = Math.max(1, Math.round(Number(e.target.value)||1)); });
+  cont.querySelectorAll('[data-msec]').forEach(i =>
+    i.onchange = e => { mesa(i.dataset.msec).sector = e.target.value.trim() || 'Salón'; pintarDnMesas(); });
+  cont.querySelectorAll('[data-mbaja]').forEach(b => b.onclick = () => {
+    const m = mesa(b.dataset.mbaja);
+    if(cuentaDe(m.id)){ tostar('Esa mesa tiene una cuenta abierta.'); return; }
+    MESAS.splice(MESAS.indexOf(m), 1);
+    pintarDnMesas(); tostar('Mesa ' + m.numero + ' quitada.');
+  });
+}
+
+/* ── Datos del local ──────────────────────────────────────── */
+function pintarDnLocal(){
+  document.getElementById('dnBarra').innerHTML =
+    `<span style="color:var(--texto-medio);font-size:16px">Esto aparece en la carta del cliente, en los códigos QR y en la cuenta impresa.</span>`;
+  const campo = (k, et, tipo) => `<div class="dn-campo"><label>${et}</label>
+    <input type="${tipo||'text'}" value="${String(LOCAL[k]).replace(/"/g,'&quot;')}" data-loc="${k}"></div>`;
+  document.getElementById('dnCuerpo').innerHTML =
+    campo('nombre','Nombre del restaurante') +
+    campo('ciudad','Ciudad') +
+    campo('direccion','Dirección') +
+    campo('telefono','Teléfono') +
+    `<p class="dn-nota" style="margin-top:20px">Para cambiar los colores de la carta del cliente hay que
+      editar el bloque <b>.cliente</b> del archivo. Las fotos van en una carpeta llamada
+      <b>fotos</b>, con el nombre del plato: p1.jpg, p2.jpg y así.</p>`;
+  document.getElementById('dnCuerpo').querySelectorAll('[data-loc]').forEach(i =>
+    i.onchange = e => {
+      LOCAL[i.dataset.loc] = e.target.value.trim();
+      document.getElementById('nombreLocal').textContent = LOCAL.nombre;
+      document.getElementById('nombreLocal2').textContent = LOCAL.nombre;
+      document.getElementById('dnLocal').textContent = LOCAL.nombre;
+      document.title = LOCAL.nombre;
+    });
+}
+
 /* ── Modal genérico ─────────────────────────────────────── */
 let elegidoModal = null;
 function abrirModal(cfg){
@@ -2736,6 +3059,7 @@ function tick(){
   document.getElementById('reloj').textContent = h;
   document.getElementById('relojCocina').textContent = h;
   document.getElementById('relojCobro').textContent = h;
+  document.getElementById('relojDueno').textContent = h;
 }
 setInterval(() => {
   if(!document.getElementById('vistaCocina').hidden) pintarCocina();
