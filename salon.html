@@ -1,0 +1,2691 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comedor La Estación — Salón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Tokens
+   El color lo usan SOLO los estados de mesa. El resto es grafito.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --fondo:#212930;
+  --superficie:#2A343C;
+  --superficie-alta:#334049;
+  --borde:#3E4C57;
+  --borde-suave:#333F48;
+  --texto:#E9EFF3;
+  --texto-medio:#A8B7C2;
+  --texto-tenue:#788894;
+
+  --libre:#8FA0AD;
+  --ocupada:#4C93DC;
+  --pidio:#E9A63C;
+  --servida:#4CAE77;
+  --cuenta:#F2703B;
+  --limpiar:#9D7ED6;
+  --alerta:#E9A63C;
+  --peligro:#E05A4E;
+
+  --r:10px;
+  --tap:48px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--fondo);
+  color:var(--texto);
+  font-family:"Barlow Semi Condensed","Helvetica Neue",Arial,sans-serif;
+  font-size:17px;
+  line-height:1.35;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--ocupada);outline-offset:2px}
+.num{font-family:"Barlow Condensed","Barlow Semi Condensed",sans-serif;font-variant-numeric:tabular-nums}
+
+/* ── Estructura ───────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.app[hidden]{display:none}
+
+/* ── Barra superior ───────────────────────────────────────── */
+.barra{
+  display:flex;align-items:center;gap:18px;
+  padding:0 18px;height:62px;flex:0 0 auto;
+  background:var(--superficie);border-bottom:1px solid var(--borde-suave);
+}
+.local{display:flex;align-items:baseline;gap:10px;min-width:0}
+.local b{font-weight:600;font-size:20px;white-space:nowrap}
+.local span{color:var(--texto-tenue);font-size:15px;white-space:nowrap}
+.barra .sep{flex:1}
+.reloj{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.usuario{
+  display:flex;align-items:center;gap:9px;padding:7px 12px;
+  border:1px solid var(--borde);border-radius:var(--r);font-size:15px;
+}
+.usuario i{
+  width:26px;height:26px;border-radius:50%;background:var(--superficie-alta);
+  display:grid;place-items:center;font-style:normal;font-weight:600;font-size:13px;
+}
+.red{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:15px;
+  border:1px solid var(--borde);border-radius:var(--r);color:var(--texto-medio);
+}
+.red .punto{width:9px;height:9px;border-radius:50%;background:var(--servida)}
+.red.off{border-color:var(--alerta);color:var(--alerta)}
+.red.off .punto{background:var(--alerta)}
+
+/* ── Avisos ───────────────────────────────────────────────── */
+.avisos{flex:0 0 auto}
+.aviso{
+  display:flex;align-items:center;gap:14px;padding:12px 18px;
+  border-bottom:1px solid var(--borde-suave);font-size:17px;
+}
+.aviso.qr{background:rgba(233,166,60,.14);color:#F4C57E;border-bottom-color:rgba(233,166,60,.3)}
+.aviso.sinred{background:rgba(233,166,60,.1);color:#F4C57E}
+.aviso b{font-weight:600}
+.aviso .sep{flex:1}
+.aviso button{
+  padding:9px 15px;border-radius:8px;font-weight:600;font-size:16px;
+  background:var(--alerta);color:#2A2013;
+}
+.pulso{width:11px;height:11px;border-radius:50%;background:var(--alerta);flex:0 0 auto}
+@media (prefers-reduced-motion:no-preference){
+  .pulso{animation:late 1.6s ease-in-out infinite}
+}
+@keyframes late{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+
+/* ── Filtros ──────────────────────────────────────────────── */
+.filtros{
+  display:flex;align-items:center;gap:8px;padding:11px 18px;flex:0 0 auto;
+  border-bottom:1px solid var(--borde-suave);overflow-x:auto;scrollbar-width:none;
+}
+.filtros::-webkit-scrollbar{display:none}
+.chip{
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+  padding:9px 14px;border:1px solid var(--borde);border-radius:999px;
+  color:var(--texto-medio);font-size:16px;min-height:42px;
+}
+.chip .marca{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.chip .cant{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:18px;color:var(--texto)}
+.chip[aria-pressed="true"]{background:var(--superficie-alta);border-color:var(--texto-tenue);color:var(--texto)}
+.filtros .divisor{width:1px;height:26px;background:var(--borde);flex:0 0 auto;margin:0 4px}
+
+/* ── Grilla ───────────────────────────────────────────────── */
+.piso{flex:1;overflow-y:auto;padding:18px 18px 120px}
+.sector{margin-bottom:26px}
+.sector h2{
+  font-family:"Barlow Semi Condensed",sans-serif;
+  font-size:16px;font-weight:600;color:var(--texto-tenue);
+  margin-bottom:11px;display:flex;align-items:center;gap:10px;
+}
+.sector h2::after{content:"";flex:1;height:1px;background:var(--borde-suave)}
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:13px}
+
+.mesa{
+  position:relative;text-align:left;
+  border:2px solid var(--borde);border-radius:var(--r);
+  background:var(--superficie);
+  padding:13px 14px 12px;min-height:146px;
+  display:flex;flex-direction:column;
+  transition:transform .08s ease;
+}
+.mesa:active{transform:scale(.98)}
+.mesa .cab{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.mesa .n{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;
+  font-size:56px;line-height:.82;letter-spacing:-.01em;
+}
+.mesa .cap{
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+  font-size:15px;color:var(--texto-tenue);padding-top:5px;
+  text-align:right;line-height:1.15;max-width:52%;
+}
+.mesa .cap span{white-space:nowrap}
+.mesa .est{
+  margin-top:11px;font-size:16px;font-weight:600;line-height:1;
+}
+.mesa .pie{margin-top:auto;padding-top:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.mesa .tiempo{font-size:15px;color:var(--texto-medio);font-variant-numeric:tabular-nums}
+.mesa .plata{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.mesa .marca-qr{
+  position:absolute;top:-9px;right:-6px;
+  background:var(--alerta);color:#2A2013;font-weight:700;font-size:14px;
+  padding:3px 9px;border-radius:999px;
+}
+.mesa .unida{font-size:14px;color:var(--texto-medio);opacity:.85}
+
+.mesa.e-libre{border-style:dashed;border-color:var(--borde);background:transparent}
+.mesa.e-libre .n{color:var(--texto-tenue)}
+.mesa.e-libre .est{color:var(--texto-tenue);font-weight:500}
+.mesa.e-ocupada{border-color:var(--ocupada);background:rgba(76,147,220,.13)}
+.mesa.e-ocupada .est{color:var(--ocupada)}
+.mesa.e-pidio{border-color:var(--pidio);background:rgba(233,166,60,.13)}
+.mesa.e-pidio .est{color:var(--pidio)}
+.mesa.e-servida{border-color:var(--servida);background:rgba(76,174,119,.13)}
+.mesa.e-servida .est{color:var(--servida)}
+.mesa.e-cuenta{border-color:var(--cuenta);background:rgba(242,112,59,.16)}
+.mesa.e-cuenta .est{color:var(--cuenta)}
+.mesa.e-limpiar{border-color:var(--limpiar);background:rgba(157,126,214,.13)}
+.mesa.e-limpiar .est{color:var(--limpiar)}
+
+.mesa.elegida{border-color:var(--texto);background:var(--superficie-alta)}
+.mesa.elegida::after{
+  content:"✓";position:absolute;top:9px;right:11px;
+  width:28px;height:28px;border-radius:50%;background:var(--texto);color:var(--fondo);
+  display:grid;place-items:center;font-size:17px;font-weight:700;
+}
+.mesa.apagada{opacity:.24;pointer-events:none}
+
+.vacio{padding:60px 20px;text-align:center;color:var(--texto-tenue);font-size:18px}
+
+/* ── Barra de acciones ────────────────────────────────────── */
+.acciones{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:flex;align-items:center;gap:11px;
+  padding:13px 18px;padding-bottom:calc(13px + env(safe-area-inset-bottom));
+  background:var(--superficie);border-top:1px solid var(--borde);
+}
+.acciones .texto{color:var(--texto-medio);font-size:16px;margin-right:auto}
+.btn{
+  min-height:var(--tap);padding:0 20px;border-radius:9px;
+  border:1px solid var(--borde);font-size:17px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+}
+.btn:hover{background:var(--superficie-alta)}
+.btn.lleno{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
+.btn.lleno:hover{background:#fff}
+.btn.aviso-btn{background:var(--alerta);color:#2A2013;border-color:var(--alerta)}
+.btn.mal{color:var(--peligro);border-color:rgba(224,90,78,.5)}
+.btn.mal:hover{background:rgba(224,90,78,.14)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.btn.ancho{width:100%}
+
+/* ── Panel de detalle ─────────────────────────────────────── */
+.telon{
+  position:fixed;inset:0;background:rgba(14,18,21,.6);z-index:30;
+  opacity:0;pointer-events:none;transition:opacity .16s ease;
+}
+.telon.abierto{opacity:1;pointer-events:auto}
+.panel{
+  position:fixed;top:0;right:0;bottom:0;width:min(470px,100%);z-index:31;
+  background:var(--superficie);border-left:1px solid var(--borde);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .2s cubic-bezier(.32,.72,0,1);
+}
+.panel.abierto{transform:none}
+@media (prefers-reduced-motion:reduce){.panel{transition:none}}
+
+.panel-cab{padding:18px;border-bottom:1px solid var(--borde-suave);flex:0 0 auto}
+.panel-cab .fila{display:flex;align-items:flex-start;gap:14px}
+.panel-cab .n{font-family:"Barlow Condensed",sans-serif;font-size:52px;font-weight:700;line-height:.85}
+.panel-cab .datos{padding-top:3px;flex:1}
+.panel-cab .estado{font-size:18px;font-weight:600;margin-bottom:3px}
+.panel-cab .sub{font-size:16px;color:var(--texto-medio)}
+.cerrar{width:44px;height:44px;border-radius:9px;font-size:24px;color:var(--texto-medio);flex:0 0 auto}
+.cerrar:hover{background:var(--superficie-alta)}
+
+.panel-cuerpo{flex:1;overflow-y:auto;padding:18px}
+.panel-pie{padding:14px 18px;padding-bottom:calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--borde-suave);flex:0 0 auto}
+.panel-pie .total{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:13px}
+.panel-pie .total span{font-size:17px;color:var(--texto-medio)}
+.panel-pie .total b{font-family:"Barlow Condensed",sans-serif;font-size:36px;font-weight:700;font-variant-numeric:tabular-nums}
+.botonera{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.botonera .full{grid-column:1/-1}
+
+.ronda{margin-bottom:18px}
+.ronda-cab{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:15px;color:var(--texto-tenue)}
+.ronda-cab .destino{
+  padding:3px 9px;border:1px solid var(--borde);border-radius:6px;
+  color:var(--texto-medio);font-weight:500;
+}
+.ronda-cab .sep{flex:1;height:1px;background:var(--borde-suave)}
+.item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--borde-suave)}
+.item .cant{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:600;min-width:30px;color:var(--texto-medio)}
+.item .cuerpo{flex:1;min-width:0}
+.item .nom{font-size:17px;font-weight:500}
+.item .acl{font-size:15px;color:var(--pidio);margin-top:2px}
+.item .lado{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.item .precio{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-variant-numeric:tabular-nums}
+.item.anulado .nom,.item.anulado .cant,.item.anulado .precio{text-decoration:line-through;color:var(--texto-tenue)}
+.item .motivo{font-size:14px;color:var(--texto-tenue);margin-top:3px}
+.marca-est{font-size:14px;padding:2px 8px;border-radius:5px;border:1px solid;white-space:nowrap}
+.m-pendiente{color:var(--texto-medio);border-color:var(--borde)}
+.m-en_cocina{color:var(--pidio);border-color:rgba(233,166,60,.45)}
+.m-listo{color:var(--servida);border-color:rgba(76,174,119,.45)}
+.m-entregado{color:var(--texto-tenue);border-color:var(--borde-suave)}
+.m-anulado{color:var(--peligro);border-color:rgba(224,90,78,.4)}
+.mini{background:none;border:none;color:var(--texto-tenue);font-size:14px;padding:4px 0;text-decoration:underline}
+.mini:hover{color:var(--peligro)}
+
+.tarjeta-qr{
+  border:1px solid rgba(233,166,60,.45);background:rgba(233,166,60,.1);
+  border-radius:var(--r);padding:14px;margin-bottom:18px;
+}
+.tarjeta-qr h3{font-size:17px;font-weight:600;color:#F4C57E;margin-bottom:4px}
+.tarjeta-qr p{font-size:15px;color:var(--texto-medio);margin-bottom:11px}
+.tarjeta-qr .item{border-bottom-color:rgba(233,166,60,.2)}
+.tarjeta-qr .botonera{margin-top:12px}
+
+.nada{text-align:center;padding:40px 16px;color:var(--texto-tenue)}
+.nada p{font-size:17px;margin-bottom:6px}
+.nada small{font-size:15px;color:var(--texto-tenue);opacity:.8}
+
+/* ── Modal ────────────────────────────────────────────────── */
+.modal{
+  position:fixed;inset:0;z-index:40;display:none;
+  place-items:center;padding:20px;background:rgba(14,18,21,.72);
+}
+.modal.abierto{display:grid}
+.caja{
+  width:min(430px,100%);background:var(--superficie);
+  border:1px solid var(--borde);border-radius:14px;padding:20px;
+}
+.caja h3{font-size:21px;font-weight:600;margin-bottom:7px}
+.caja p{font-size:16px;color:var(--texto-medio);margin-bottom:16px}
+.caja label{display:block;font-size:15px;color:var(--texto-medio);margin-bottom:7px}
+.opciones{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.opciones button{
+  padding:11px 14px;border:1px solid var(--borde);border-radius:8px;font-size:16px;
+  color:var(--texto-medio);min-height:44px;
+}
+.opciones button[aria-pressed="true"]{background:var(--texto);color:var(--fondo);border-color:var(--texto);font-weight:600}
+input[type=text],input[type=number]{
+  width:100%;padding:13px 14px;font:inherit;font-size:17px;
+  background:var(--fondo);color:var(--texto);
+  border:1px solid var(--borde);border-radius:8px;margin-bottom:16px;
+}
+input::placeholder{color:var(--texto-tenue)}
+.pin{letter-spacing:.5em;font-family:"Barlow Condensed",sans-serif;font-size:24px}
+
+/* ── Aviso flotante ───────────────────────────────────────── */
+.tostada{
+  position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);z-index:50;
+  background:var(--superficie-alta);border:1px solid var(--borde);
+  border-radius:10px;padding:13px 20px;font-size:17px;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  max-width:calc(100% - 32px);text-align:center;
+}
+.tostada.visible{opacity:1;transform:translate(-50%,0)}
+
+/* ── Armado de pedido ─────────────────────────────────────── */
+.pedido{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.pedido[hidden]{display:none}
+.volver{
+  display:flex;align-items:center;gap:8px;height:44px;padding:0 15px;
+  border:1px solid var(--borde);border-radius:9px;font-size:17px;font-weight:600;flex:0 0 auto;
+}
+.volver:hover{background:var(--superficie-alta)}
+.buscar{position:relative;flex:0 1 320px}
+.barra input.busq{
+  width:100%;margin:0;height:44px;padding:0 14px;font-size:17px;
+  background:var(--fondo);border:1px solid var(--borde);border-radius:9px;color:var(--texto);
+}
+.pedido-cuerpo{flex:1;display:flex;min-height:0}
+.carta-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.rubros{
+  display:flex;gap:8px;padding:11px 18px;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--borde-suave);flex:0 0 auto;
+}
+.rubros::-webkit-scrollbar{display:none}
+.carta{flex:1;overflow-y:auto;padding:16px 18px 24px}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:11px}
+.rubro-tit{
+  font-size:16px;font-weight:600;color:var(--texto-tenue);
+  margin:20px 0 11px;display:flex;align-items:center;gap:10px;
+}
+.rubro-tit:first-child{margin-top:0}
+.rubro-tit::after{content:"";flex:1;height:1px;background:var(--borde-suave)}
+.plato{
+  text-align:left;border:1px solid var(--borde);border-radius:var(--r);
+  background:var(--superficie);padding:12px 13px;min-height:96px;
+  display:flex;flex-direction:column;gap:7px;transition:transform .07s ease;
+}
+.plato:hover{border-color:var(--texto-tenue)}
+.plato:active{transform:scale(.97)}
+.plato .nom{font-size:17px;line-height:1.2;font-weight:500;flex:1}
+.plato .fila{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.plato .precio{font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.plato .dest{font-size:13px;color:var(--texto-tenue)}
+.plato .llevan{
+  align-self:flex-start;font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:600;
+  background:var(--texto);color:var(--fondo);border-radius:999px;padding:1px 9px;
+}
+.plato.agotado{opacity:.4;pointer-events:none;border-style:dashed}
+.plato.agotado .precio{text-decoration:line-through}
+.plato .sinstock{font-size:14px;color:var(--peligro)}
+
+.ticket{
+  width:370px;flex:0 0 auto;display:flex;flex-direction:column;
+  border-left:1px solid var(--borde);background:var(--superficie);min-height:0;
+}
+.ticket-cab{padding:15px 16px 12px;border-bottom:1px solid var(--borde-suave);font-size:16px;color:var(--texto-medio)}
+.ticket-lista{flex:1;overflow-y:auto;padding:6px 16px 16px}
+.ticket-pie{padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--borde-suave)}
+.linea{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--borde-suave)}
+.linea .txt{flex:1;min-width:0}
+.linea .txt b{display:block;font-size:16px;font-weight:500;line-height:1.2}
+.linea .acl{font-size:14px;color:var(--pidio);margin-top:3px}
+.linea .acl button{color:inherit;text-decoration:underline;font-size:14px}
+.linea .ponerAcl{font-size:14px;color:var(--texto-tenue);text-decoration:underline;margin-top:3px}
+.linea .der{text-align:right;flex:0 0 auto}
+.linea .precio{font-family:"Barlow Condensed",sans-serif;font-size:18px;font-variant-numeric:tabular-nums;display:block}
+.contador{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.contador button{
+  width:34px;height:34px;border:1px solid var(--borde);border-radius:7px;
+  font-size:20px;line-height:1;color:var(--texto-medio);
+}
+.contador button:hover{background:var(--superficie-alta);color:var(--texto)}
+.contador .v{
+  min-width:32px;text-align:center;font-family:"Barlow Condensed",sans-serif;
+  font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;
+}
+.ya{margin-top:18px}
+.ya-cab{font-size:15px;color:var(--texto-tenue);padding-bottom:7px;border-bottom:1px solid var(--borde-suave)}
+.ya .linea{opacity:.62}
+.ticket .nada{padding:34px 10px}
+.reparto{font-size:15px;color:var(--texto-medio);margin-bottom:11px;display:flex;flex-wrap:wrap;gap:7px}
+.reparto span{border:1px solid var(--borde);border-radius:6px;padding:2px 9px}
+.ticket-pie .total{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.ticket-pie .total span{font-size:17px;color:var(--texto-medio)}
+.ticket-pie .total b{font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.abrirTicket{display:none}
+
+@media (max-width:900px){
+  .ticket{
+    position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;z-index:25;
+    max-height:78vh;border-left:none;border-top:1px solid var(--borde);
+    border-radius:16px 16px 0 0;transform:translateY(100%);
+    transition:transform .2s cubic-bezier(.32,.72,0,1);
+  }
+  .ticket.abierto{transform:none}
+  .abrirTicket{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:24;
+    align-items:center;gap:12px;padding:12px 15px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    background:var(--superficie);border-top:1px solid var(--borde);font-size:17px;
+  }
+  .abrirTicket .plata{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:700;margin-left:auto}
+  .carta{padding-bottom:96px}
+  .rejilla{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .plato{min-height:88px;padding:10px}
+  .plato .nom{font-size:16px}
+  .pedido .barra{flex-wrap:wrap;height:auto;padding:9px 13px;gap:9px}
+  .buscar{flex:1 1 100%;order:3}
+}
+@media (max-width:720px){
+  body{font-size:16px}
+  .barra{height:56px;padding:0 13px;gap:11px}
+  .local span,.usuario span{display:none}
+  .reloj{font-size:22px}
+  .piso{padding:13px 13px 110px}
+  .grilla{grid-template-columns:repeat(2,1fr);gap:10px}
+  .mesa{min-height:132px;padding:11px}
+  .mesa .n{font-size:46px}
+  .panel{width:100%;top:auto;height:88vh;border-left:none;border-top:1px solid var(--borde);border-radius:16px 16px 0 0;transform:translateY(100%)}
+  .panel.abierto{transform:none}
+  .acciones{gap:8px;padding:11px 13px}
+  .acciones .texto{font-size:15px}
+  .btn{padding:0 15px;font-size:16px}
+}
+
+/* ── Cocina ───────────────────────────────────────────────── */
+.cocina{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.cocina[hidden]{display:none}
+.destinos{
+  display:flex;gap:9px;padding:12px 18px;flex:0 0 auto;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--borde-suave);
+}
+.destinos::-webkit-scrollbar{display:none}
+.destinos .chip{font-size:18px;padding:11px 18px;min-height:50px}
+.tablero{flex:1;overflow-y:auto;padding:16px 18px 28px}
+.tablero-grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;align-items:start}
+.bloque-tit{
+  font-size:17px;font-weight:600;color:var(--texto-tenue);
+  margin:24px 0 12px;display:flex;align-items:center;gap:11px;
+}
+.bloque-tit:first-child{margin-top:0}
+.bloque-tit::after{content:"";flex:1;height:1px;background:var(--borde-suave)}
+
+.comanda{
+  border:2px solid var(--borde);border-radius:12px;background:var(--superficie);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.comanda-cab{display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--borde-suave)}
+.comanda-cab .nro{font-family:"Barlow Condensed",sans-serif;font-size:38px;font-weight:700;line-height:1;margin-bottom:3px}
+.comanda-cab .meta{font-size:15px;color:var(--texto-tenue);line-height:1.25}
+.comanda-cab .espera{
+  margin-left:auto;text-align:right;font-family:"Barlow Condensed",sans-serif;
+  font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
+}
+.comanda-cab .espera small{
+  display:block;font-family:"Barlow Semi Condensed",sans-serif;
+  font-size:14px;font-weight:400;color:var(--texto-tenue);
+}
+.plato-fila{
+  display:flex;gap:13px;width:100%;text-align:left;align-items:flex-start;
+  padding:12px 15px;border-bottom:1px solid var(--borde-suave);min-height:56px;
+}
+.plato-fila:last-child{border-bottom:none}
+.plato-fila:hover{background:var(--superficie-alta)}
+.plato-fila .c{font-family:"Barlow Condensed",sans-serif;font-size:27px;font-weight:700;min-width:34px;line-height:1.05}
+.plato-fila .t{flex:1;min-width:0}
+.plato-fila .t b{font-size:19px;font-weight:500;line-height:1.2;display:block}
+.plato-fila .t .acl{font-size:17px;color:var(--pidio);font-weight:600;margin-top:3px}
+.plato-fila .tilde{
+  width:32px;height:32px;border-radius:8px;border:2px solid var(--borde);
+  flex:0 0 auto;display:grid;place-items:center;font-size:19px;color:transparent;
+}
+.plato-fila.hecho{opacity:.45}
+.plato-fila.hecho .t b{text-decoration:line-through}
+.plato-fila.hecho .tilde{background:var(--servida);border-color:var(--servida);color:#12231A}
+.comanda-pie{padding:12px 15px;border-top:1px solid var(--borde-suave);margin-top:auto}
+.comanda-pie .btn{width:100%;min-height:54px;font-size:19px}
+
+.c-media{border-color:var(--pidio)}
+.c-media .espera{color:var(--pidio)}
+.c-tarde{border-color:var(--peligro);background:rgba(224,90,78,.09)}
+.c-tarde .espera{color:var(--peligro)}
+.c-lista{border-color:var(--servida);background:rgba(76,174,119,.09)}
+.c-lista .espera{color:var(--servida)}
+
+@media (max-width:720px){
+  .tablero-grilla{grid-template-columns:1fr}
+  .cocina .barra{height:auto;padding:10px 13px;flex-wrap:wrap;gap:9px}
+}
+/* ── Cobro y cierre ───────────────────────────────────────── */
+.cobro{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.cobro[hidden]{display:none}
+.cb-cuerpo{flex:1;display:flex;min-height:0}
+.cb-izq{flex:1;overflow-y:auto;padding:18px;min-width:0}
+.cb-der{
+  width:400px;flex:0 0 auto;display:flex;flex-direction:column;min-height:0;
+  border-left:1px solid var(--borde);background:var(--superficie);
+}
+.cb-tit{font-size:16px;font-weight:600;color:var(--texto-tenue);margin:0 0 12px;display:flex;align-items:center;gap:10px}
+.cb-tit::after{content:"";flex:1;height:1px;background:var(--borde-suave)}
+.cb-tit.arriba{margin-top:24px}
+
+.cb-fila{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--borde-suave)}
+.cb-fila .c{font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;min-width:30px;color:var(--texto-medio)}
+.cb-fila .t{flex:1;min-width:0}
+.cb-fila .t b{font-size:17px;font-weight:500;display:block;line-height:1.25}
+.cb-fila .t .acl{font-size:14px;color:var(--texto-tenue);margin-top:2px}
+.cb-fila .p{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-variant-numeric:tabular-nums;text-align:right}
+.cb-fila.anulada{opacity:.4}
+.cb-fila.anulada .t b,.cb-fila.anulada .p{text-decoration:line-through}
+.cb-repartir{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cb-repartir button{
+  border:1px solid var(--borde);border-radius:7px;padding:5px 11px;
+  font-size:15px;color:var(--texto-medio);min-height:36px;
+}
+.cb-repartir button:hover{background:var(--superficie-alta);color:var(--texto)}
+.cb-repartir button.tiene{background:var(--texto);color:var(--fondo);border-color:var(--texto);font-weight:600}
+.cb-sobra{
+  border:1px dashed var(--peligro);border-radius:9px;padding:11px 14px;
+  color:var(--peligro);font-size:16px;margin-top:14px;
+}
+
+.cb-modos{display:flex;gap:8px;padding:15px 16px 12px;flex:0 0 auto}
+.cb-modos button{
+  flex:1;min-height:52px;border:1px solid var(--borde);border-radius:9px;
+  font-size:16px;color:var(--texto-medio);line-height:1.15;padding:0 6px;
+}
+.cb-modos button[aria-pressed="true"]{background:var(--texto);color:var(--fondo);border-color:var(--texto);font-weight:600}
+.cb-cuantos{display:flex;align-items:center;gap:12px;padding:0 16px 14px;font-size:16px;color:var(--texto-medio)}
+.cb-partes{flex:1;overflow-y:auto;padding:0 16px 16px}
+.cb-parte{
+  border:1px solid var(--borde);border-radius:10px;padding:12px 14px;margin-bottom:10px;
+  display:flex;align-items:center;gap:12px;
+}
+.cb-parte .nom{font-size:17px;font-weight:500;flex:1;min-width:0}
+.cb-parte .nom small{display:block;font-size:14px;color:var(--texto-tenue);font-weight:400;margin-top:2px}
+.cb-parte .mon{font-family:"Barlow Condensed",sans-serif;font-size:23px;font-weight:600;font-variant-numeric:tabular-nums}
+.cb-parte .btn{min-height:42px;padding:0 15px;font-size:16px}
+.cb-parte.activa{border-color:var(--texto);background:var(--superficie-alta)}
+.cb-parte.pagada{border-color:var(--servida);background:rgba(76,174,119,.1)}
+.cb-parte.pagada .mon{color:var(--servida)}
+
+.cb-pie{padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--borde-suave);flex:0 0 auto}
+.cb-cuentas{font-size:16px;margin-bottom:12px}
+.cb-cuentas div{display:flex;justify-content:space-between;padding:3px 0;color:var(--texto-medio)}
+.cb-cuentas div.fuerte{color:var(--texto);font-size:18px;font-weight:600;padding-top:9px;margin-top:6px;border-top:1px solid var(--borde-suave)}
+.cb-cuentas div.falta{color:var(--peligro);font-weight:600}
+.cb-cuentas div.listo{color:var(--servida);font-weight:600}
+.cb-cuentas .num{font-family:"Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;font-size:1.15em}
+.cb-acciones{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.cb-acciones .full{grid-column:1/-1}
+
+.cb-vuelto{
+  background:var(--fondo);border:1px solid var(--borde);border-radius:9px;
+  padding:13px 15px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline;
+}
+.cb-vuelto span{font-size:16px;color:var(--texto-medio)}
+.cb-vuelto b{font-family:"Barlow Condensed",sans-serif;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.cb-vuelto b.corto{color:var(--peligro)}
+
+@media (max-width:980px){
+  .cb-cuerpo{flex-direction:column}
+  .cb-der{width:100%;border-left:none;border-top:1px solid var(--borde);max-height:60vh}
+  .cb-izq{max-height:40vh}
+}
+
+/* ── Cuenta impresa, 80 mm ────────────────────────────────── */
+#impresion{display:none}
+@media print{
+  body{background:#fff;color:#000;overflow:visible}
+  .app,.pedido,.cocina,.cobro,.panel,.telon,.modal,.tostada{display:none !important}
+  #impresion{
+    display:block;width:72mm;margin:0 auto;padding:4mm 0;
+    font-family:"Barlow Semi Condensed",sans-serif;font-size:11pt;line-height:1.35;color:#000;
+  }
+  #impresion h1{font-size:15pt;text-align:center;margin-bottom:1mm}
+  #impresion .sub{text-align:center;font-size:9.5pt;margin-bottom:3mm}
+  #impresion hr{border:none;border-top:1px dashed #000;margin:3mm 0}
+  #impresion .l{display:flex;justify-content:space-between;gap:4mm;padding:.6mm 0}
+  #impresion .l .n{flex:1}
+  #impresion .tot{font-size:14pt;font-weight:700}
+  #impresion .legal{text-align:center;font-size:9pt;margin-top:4mm;line-height:1.3}
+}
+/* ── Carta pública del cliente ────────────────────────────── */
+.cliente{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:560px;margin:0 auto}
+.cliente[hidden]{display:none}
+.cl-cab{
+  padding:15px 16px 13px;border-bottom:1px solid var(--borde-suave);flex:0 0 auto;
+  display:flex;align-items:center;gap:13px;
+}
+.cl-cab h1{font-size:21px;font-weight:600;line-height:1.15}
+.cl-cab .mesa-et{font-size:15px;color:var(--texto-tenue);margin-top:1px}
+.cl-cab .btn{min-height:42px;padding:0 14px;font-size:16px;margin-left:auto;flex:0 0 auto}
+.cl-cuerpo{flex:1;overflow-y:auto;padding:14px 16px 112px}
+.cl-rubros{display:flex;gap:7px;padding:11px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--borde-suave);flex:0 0 auto}
+.cl-rubros::-webkit-scrollbar{display:none}
+
+.cl-plato{
+  display:flex;gap:13px;width:100%;text-align:left;align-items:stretch;
+  padding:11px 0;border-bottom:1px solid var(--borde-suave);
+}
+.foto{
+  width:88px;height:88px;flex:0 0 auto;border-radius:10px;overflow:hidden;
+  position:relative;background:var(--superficie-alta);
+}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .plato-ph{position:absolute;inset:0}
+.cl-plato .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.cl-plato .info b{font-size:17px;font-weight:500;line-height:1.25}
+.cl-plato .info .r{font-size:14px;color:var(--texto-tenue);margin-top:3px}
+.cl-plato .info .pr{font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;margin-top:auto;padding-top:6px;font-variant-numeric:tabular-nums}
+.cl-plato .mas{
+  align-self:center;width:44px;height:44px;flex:0 0 auto;border-radius:10px;
+  border:1px solid var(--borde);font-size:24px;color:var(--texto-medio);
+}
+.cl-plato .mas.tiene{background:var(--texto);color:var(--fondo);border-color:var(--texto);font-family:"Barlow Condensed",sans-serif;font-weight:700}
+.cl-plato.agotado{opacity:.42}
+.cl-plato.agotado .pr{text-decoration:line-through}
+.cl-plato .nostock{font-size:14px;color:var(--peligro);padding-top:6px}
+
+.cl-barra{
+  position:fixed;left:0;right:0;bottom:0;z-index:24;max-width:560px;margin:0 auto;
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  background:var(--superficie);border-top:1px solid var(--borde);font-size:16px;
+}
+.cl-barra .plata{font-family:"Barlow Condensed",sans-serif;font-size:23px;font-weight:700;margin-left:auto}
+.cl-aviso{
+  border:1px solid rgba(233,166,60,.45);background:rgba(233,166,60,.1);border-radius:10px;
+  padding:13px 15px;margin-bottom:16px;font-size:16px;color:#F4C57E;
+}
+.cl-ok{
+  border:1px solid rgba(76,174,119,.45);background:rgba(76,174,119,.1);border-radius:10px;
+  padding:13px 15px;margin-bottom:16px;font-size:16px;color:#93D6AE;
+}
+
+/* ── Hoja de códigos QR ───────────────────────────────────── */
+.qrs{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.qrs[hidden]{display:none}
+.qr-cuerpo{flex:1;overflow-y:auto;padding:18px}
+.qr-grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.qr-carta{
+  border:1px solid var(--borde);border-radius:12px;background:#fff;color:#111;
+  padding:14px;text-align:center;
+}
+.qr-carta .lugar{font-size:15px;color:#444;font-weight:600}
+.qr-carta .n{font-family:"Barlow Condensed",sans-serif;font-size:40px;font-weight:700;line-height:1;margin:2px 0 8px}
+.qr-carta svg{width:100%;height:auto;display:block}
+.qr-carta .pie{font-size:13px;color:#444;margin-top:8px;line-height:1.3}
+@media print{
+  .qrs{display:block !important}
+  .qrs .barra,.qr-aclara{display:none !important}
+  .qr-cuerpo{overflow:visible;padding:0}
+  .qr-grilla{grid-template-columns:repeat(3,1fr);gap:8mm}
+  .qr-carta{border:1px solid #999;break-inside:avoid;page-break-inside:avoid}
+}
+.qr-aclara{font-size:16px;color:var(--texto-medio);margin-bottom:16px;max-width:66ch;line-height:1.45}
+</style>
+</head>
+<body>
+
+<div class="app" id="vistaSalon">
+  <header class="barra">
+    <div class="local">
+      <b id="nombreLocal">Comedor La Estación</b>
+      <span>Salón</span>
+    </div>
+    <div class="sep"></div>
+    <button class="red" id="btnRed" title="Simular corte de internet">
+      <span class="punto"></span><span id="txtRed">En línea</span>
+    </button>
+    <button class="red" id="btnCocina" title="Ver la pantalla de cocina">
+      <span id="txtCocina">Cocina</span>
+    </button>
+    <div class="usuario"><i>MC</i><span>Marta · Cajera</span></div>
+    <div class="reloj" id="reloj">21:47</div>
+  </header>
+
+  <div class="avisos" id="avisos"></div>
+
+  <div class="filtros" id="filtros"></div>
+
+  <main class="piso" id="piso"></main>
+
+  <div class="acciones" id="acciones"></div>
+</div>
+
+<section class="cliente" id="vistaCliente" hidden>
+  <header class="cl-cab">
+    <div>
+      <h1 id="clNombre">Comedor La Estación</h1>
+      <div class="mesa-et" id="clMesa">Mesa 7</div>
+    </div>
+    <button class="btn" id="clCambiar">Mi mesa</button>
+  </header>
+  <nav class="cl-rubros" id="clRubros"></nav>
+  <div class="cl-cuerpo" id="clCuerpo"></div>
+  <div class="cl-barra" id="clBarra"></div>
+</section>
+
+<section class="qrs" id="vistaQR" hidden>
+  <header class="barra">
+    <button class="volver" id="btnVolverDeQR">← Salón</button>
+    <div class="local"><b>Códigos QR de las mesas</b></div>
+    <div class="sep"></div>
+    <button class="btn" id="btnImprimirQR">Imprimir</button>
+  </header>
+  <div class="qr-cuerpo">
+    <p class="qr-aclara" id="qrAclara"></p>
+    <div class="qr-grilla" id="qrGrilla"></div>
+  </div>
+</section>
+
+<section class="cobro" id="vistaCobro" hidden>
+  <header class="barra">
+    <button class="volver" id="btnVolverDeCobro">← Salón</button>
+    <div class="local"><b id="cbTitulo">Mesa 7</b><span id="cbSub">4 personas</span></div>
+    <div class="sep"></div>
+    <div class="reloj" id="relojCobro">21:47</div>
+  </header>
+  <div class="cb-cuerpo">
+    <div class="cb-izq" id="cbConsumo"></div>
+    <aside class="cb-der">
+      <div class="cb-modos" id="cbModos"></div>
+      <div id="cbCuantos"></div>
+      <div class="cb-partes" id="cbPartes"></div>
+      <div class="cb-pie" id="cbPie"></div>
+    </aside>
+  </div>
+</section>
+
+<div id="impresion"></div>
+
+<section class="cocina" id="vistaCocina" hidden>
+  <header class="barra">
+    <button class="volver" id="btnVolverDeCocina">← Salón</button>
+    <div class="local"><b>Cocina</b><span id="nombreLocal2">Comedor La Estación</span></div>
+    <div class="sep"></div>
+    <div class="reloj" id="relojCocina">21:47</div>
+  </header>
+  <nav class="destinos" id="destinos"></nav>
+  <div class="tablero" id="tablero"></div>
+</section>
+
+<section class="pedido" id="vistaPedido" hidden>
+  <header class="barra">
+    <button class="volver" id="btnVolverSalon">← Salón</button>
+    <div class="local">
+      <b id="pedTitulo">Mesa 7</b>
+      <span id="pedSub">4 personas</span>
+    </div>
+    <div class="sep"></div>
+    <div class="buscar"><input type="search" class="busq" id="buscador" placeholder="Buscar plato" autocomplete="off"></div>
+  </header>
+  <div class="pedido-cuerpo">
+    <div class="carta-col">
+      <nav class="rubros" id="rubros"></nav>
+      <div class="carta" id="carta"></div>
+    </div>
+    <aside class="ticket" id="ticket">
+      <div class="ticket-cab" id="ticketCab">Pedido nuevo</div>
+      <div class="ticket-lista" id="ticketLista"></div>
+      <div class="ticket-pie" id="ticketPie"></div>
+    </aside>
+  </div>
+  <div class="abrirTicket" id="abrirTicket"></div>
+</section>
+
+<div class="telon" id="telon"></div>
+
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitulo">
+  <div class="panel-cab">
+    <div class="fila">
+      <div class="num n" id="panelNum">7</div>
+      <div class="datos">
+        <div class="estado" id="panelTitulo">Ocupada</div>
+        <div class="sub" id="panelSub">4 personas · 22 min · Atiende Nico</div>
+      </div>
+      <button class="cerrar" id="btnCerrarPanel" aria-label="Cerrar">✕</button>
+    </div>
+  </div>
+  <div class="panel-cuerpo" id="panelCuerpo"></div>
+  <div class="panel-pie" id="panelPie"></div>
+</aside>
+
+<div class="modal" id="modal">
+  <div class="caja" id="cajaModal"></div>
+</div>
+
+<div class="tostada" id="tostada"></div>
+
+<script>
+/* Codificador QR mínimo: modo byte, corrección M, versiones 1 a 10. */
+const QR = (() => {
+  const EC = {
+    1:[16,10,1,16,0,0],   2:[28,16,1,28,0,0],   3:[44,26,1,44,0,0],
+    4:[64,18,2,32,0,0],   5:[86,24,2,43,0,0],   6:[108,16,4,27,0,0],
+    7:[124,18,4,31,0,0],  8:[154,22,2,38,2,39], 9:[182,22,3,36,2,37],
+    10:[216,26,4,43,1,44]
+  };
+  const ALIN = {1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],
+                7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+
+  const EXP = new Array(512), LOG = new Array(256);
+  (() => { let x = 1;
+    for(let i=0;i<255;i++){ EXP[i]=x; LOG[x]=i; x<<=1; if(x&0x100) x^=0x11D; }
+    for(let i=255;i<512;i++) EXP[i]=EXP[i-255];
+  })();
+  const mul = (a,b) => (a===0||b===0) ? 0 : EXP[LOG[a]+LOG[b]];
+
+  function genPoly(n){
+    let p = [1];
+    for(let i=0;i<n;i++){
+      const q = new Array(p.length+1).fill(0);
+      for(let j=0;j<p.length;j++){
+        q[j] ^= mul(p[j], 1);
+        q[j+1] ^= mul(p[j], EXP[i]);
+      }
+      p = q;
+    }
+    return p;
+  }
+  function ecBytes(data, n){
+    const g = genPoly(n);
+    const r = data.concat(new Array(n).fill(0));
+    for(let i=0;i<data.length;i++){
+      const c = r[i];
+      if(!c) continue;
+      for(let j=0;j<g.length;j++) r[i+j] ^= mul(g[j], c);
+    }
+    return r.slice(data.length);
+  }
+
+  function bchFormato(v){
+    let d = v << 10;
+    while(Math.floor(Math.log2(d)) >= 10) d ^= 0x537 << (Math.floor(Math.log2(d)) - 10);
+    return ((v << 10) | d) ^ 0x5412;
+  }
+  function bchVersion(v){
+    let d = v << 12;
+    while(Math.floor(Math.log2(d)) >= 12) d ^= 0x1F25 << (Math.floor(Math.log2(d)) - 12);
+    return (v << 12) | d;
+  }
+
+  const MASCARAS = [
+    (r,c)=>(r+c)%2===0, (r,c)=>r%2===0, (r,c)=>c%3===0, (r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0, (r,c)=>((r*c)%2)+((r*c)%3)===0,
+    (r,c)=>(((r*c)%2)+((r*c)%3))%2===0, (r,c)=>(((r+c)%2)+((r*c)%3))%2===0
+  ];
+
+  function utf8(txt){
+    const b = [];
+    for(const ch of unescape(encodeURIComponent(txt))) b.push(ch.charCodeAt(0));
+    return b;
+  }
+
+  function generar(texto){
+    const datos = utf8(texto);
+    let ver = 0;
+    for(let v=1;v<=10;v++){ if(datos.length + 2 <= EC[v][0]){ ver = v; break; } }
+    if(!ver) throw new Error('El texto es muy largo para este generador.');
+
+    const [totalDatos, ecPorBloque, g1, g1cw, g2, g2cw] = EC[ver];
+
+    /* Flujo de bits */
+    const bits = [];
+    const push = (val, len) => { for(let i=len-1;i>=0;i--) bits.push((val>>i)&1); };
+    push(4, 4);
+    push(datos.length, 8);
+    datos.forEach(b => push(b, 8));
+    for(let i=0;i<4 && bits.length < totalDatos*8;i++) bits.push(0);
+    while(bits.length % 8) bits.push(0);
+    const cw = [];
+    for(let i=0;i<bits.length;i+=8){
+      let b = 0; for(let j=0;j<8;j++) b = (b<<1)|bits[i+j];
+      cw.push(b);
+    }
+    const relleno = [0xEC, 0x11];
+    let k = 0;
+    while(cw.length < totalDatos) cw.push(relleno[k++ % 2]);
+
+    /* Bloques */
+    const bloques = [], ecs = [];
+    let p = 0;
+    for(let i=0;i<g1;i++){ bloques.push(cw.slice(p, p+g1cw)); p += g1cw; }
+    for(let i=0;i<g2;i++){ bloques.push(cw.slice(p, p+g2cw)); p += g2cw; }
+    bloques.forEach(b => ecs.push(ecBytes(b, ecPorBloque)));
+
+    const final = [];
+    const maxD = Math.max(...bloques.map(b => b.length));
+    for(let i=0;i<maxD;i++) bloques.forEach(b => { if(i < b.length) final.push(b[i]); });
+    for(let i=0;i<ecPorBloque;i++) ecs.forEach(e => final.push(e[i]));
+
+    /* Matriz */
+    const n = ver*4 + 17;
+    const m = Array.from({length:n}, () => new Array(n).fill(null));
+    const reservado = Array.from({length:n}, () => new Array(n).fill(false));
+    const poner = (r,c,v) => { m[r][c] = v; reservado[r][c] = true; };
+
+    const finder = (fr,fc) => {
+      for(let r=-1;r<=7;r++) for(let c=-1;c<=7;c++){
+        const rr = fr+r, cc = fc+c;
+        if(rr<0||cc<0||rr>=n||cc>=n) continue;
+        const dentro = r>=0&&r<=6&&c>=0&&c<=6;
+        const anillo = dentro && (r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4));
+        poner(rr, cc, anillo ? 1 : 0);
+      }
+    };
+    finder(0,0); finder(0,n-7); finder(n-7,0);
+
+    for(let i=8;i<n-8;i++){ poner(6,i,(i%2===0)?1:0); poner(i,6,(i%2===0)?1:0); }
+
+    const cent = ALIN[ver];
+    cent.forEach(a => cent.forEach(b => {
+      if((a===6&&b===6)||(a===6&&b===cent[cent.length-1])||(a===cent[cent.length-1]&&b===6)) return;
+      for(let r=-2;r<=2;r++) for(let c=-2;c<=2;c++)
+        poner(a+r, b+c, (Math.abs(r)===2||Math.abs(c)===2||(r===0&&c===0)) ? 1 : 0);
+    }));
+
+    poner(n-8, 8, 1);
+    for(let i=0;i<9;i++){
+      if(m[8][i]===null) poner(8,i,0);
+      if(m[i][8]===null) poner(i,8,0);
+    }
+    for(let i=0;i<8;i++){
+      if(m[8][n-1-i]===null) poner(8,n-1-i,0);
+      if(m[n-1-i][8]===null) poner(n-1-i,8,0);
+    }
+    if(ver>=7){
+      for(let i=0;i<18;i++){
+        const r = Math.floor(i/3), c = i%3;
+        poner(n-11+c, r, 0); poner(r, n-11+c, 0);
+      }
+    }
+
+    /* Datos en zigzag */
+    let bi = 0, arriba = true;
+    const bitDe = i => (i < final.length*8) ? (final[i>>3] >> (7-(i&7))) & 1 : 0;
+    for(let col=n-1; col>0; col-=2){
+      if(col===6) col--;
+      for(let j=0;j<n;j++){
+        const fila = arriba ? n-1-j : j;
+        for(let d=0;d<2;d++){
+          const c = col-d;
+          if(reservado[fila][c]) continue;
+          m[fila][c] = bitDe(bi++);
+        }
+      }
+      arriba = !arriba;
+    }
+
+    /* Máscaras */
+    const penal = mm => {
+      let p1 = 0, p2 = 0, p3 = 0, oscuros = 0;
+      const patron = [1,0,1,1,1,0,1];
+      for(let r=0;r<n;r++){
+        let run = 1;
+        for(let c=1;c<n;c++){
+          if(mm[r][c]===mm[r][c-1]) run++; else { if(run>=5) p1 += run-2; run = 1; }
+        }
+        if(run>=5) p1 += run-2;
+      }
+      for(let c=0;c<n;c++){
+        let run = 1;
+        for(let r=1;r<n;r++){
+          if(mm[r][c]===mm[r-1][c]) run++; else { if(run>=5) p1 += run-2; run = 1; }
+        }
+        if(run>=5) p1 += run-2;
+      }
+      for(let r=0;r<n-1;r++) for(let c=0;c<n-1;c++){
+        const v = mm[r][c];
+        if(v===mm[r][c+1] && v===mm[r+1][c] && v===mm[r+1][c+1]) p2 += 3;
+      }
+      const buscar = arr => {
+        let t = 0;
+        for(let i=0;i+7<=arr.length;i++){
+          let ok = true;
+          for(let j=0;j<7;j++) if(arr[i+j]!==patron[j]){ ok = false; break; }
+          if(!ok) continue;
+          const antes = arr.slice(Math.max(0,i-4), i);
+          const desp  = arr.slice(i+7, i+11);
+          if(antes.length===4 && antes.every(x=>x===0)) t += 40;
+          if(desp.length===4 && desp.every(x=>x===0)) t += 40;
+        }
+        return t;
+      };
+      for(let r=0;r<n;r++) p3 += buscar(mm[r]);
+      for(let c=0;c<n;c++) p3 += buscar(mm.map(f => f[c]));
+      mm.forEach(f => f.forEach(v => { if(v) oscuros++; }));
+      const pct = oscuros*100/(n*n);
+      const p4 = Math.floor(Math.abs(pct-50)/5)*10;
+      return p1+p2+p3+p4;
+    };
+
+    let mejor = null, mejorP = Infinity, mejorM = 0;
+    for(let mask=0;mask<8;mask++){
+      const mm = m.map(f => f.slice());
+      for(let r=0;r<n;r++) for(let c=0;c<n;c++)
+        if(!reservado[r][c] && MASCARAS[mask](r,c)) mm[r][c] ^= 1;
+
+      const fmt = bchFormato((0b00<<3)|mask);
+      for(let i=0;i<15;i++){
+        const b = (fmt >> (14-i)) & 1;
+        if(i<6) mm[8][i] = b;
+        else if(i<8) mm[8][i+1] = b;
+        else if(i===8) mm[7][8] = b;
+        else mm[14-i][8] = b;
+
+        if(i<7) mm[n-1-i][8] = b;
+        else mm[8][n-15+i] = b;
+      }
+      mm[n-8][8] = 1;
+      if(ver>=7){
+        const vi = bchVersion(ver);
+        for(let i=0;i<18;i++){
+          const b = (vi >> i) & 1;
+          const r = Math.floor(i/3), c = i%3;
+          mm[n-11+c][r] = b; mm[r][n-11+c] = b;
+        }
+      }
+      const pe = penal(mm);
+      if(pe < mejorP){ mejorP = pe; mejor = mm; mejorM = mask; }
+    }
+    return mejor;
+  }
+
+  function svg(texto, lado){
+    const m = generar(texto), n = m.length, q = 4, t = n + q*2;
+    let d = '';
+    for(let r=0;r<n;r++) for(let c=0;c<n;c++)
+      if(m[r][c]) d += `M${c+q} ${r+q}h1v1h-1z`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${t} ${t}" width="${lado}" height="${lado}" shape-rendering="crispEdges">
+      <rect width="${t}" height="${t}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  }
+
+  return { generar, svg };
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   Datos de prueba. El estado de la mesa NO se guarda:
+   se deriva de la cuenta y de sus ítems, como quedó en el modelo.
+   ═══════════════════════════════════════════════════════════ */
+
+const DESTINOS = { coc:'Cocina', bar:'Barra', par:'Parrilla' };
+
+const RUBROS = ['Para picar','Empanadas','Parrilla','Minutas','Milanesas','Pastas','Guarniciones','Postres','Bebidas','Cerveza y vino','Cafetería'];
+
+/* Los doce primeros mantienen su id porque las mesas de prueba los usan. */
+const CARTA = [
+  { id:'p1',  nom:'Milanesa napolitana con papas fritas', precio:1950000, destino:'coc', rubro:'Milanesas' },
+  { id:'p2',  nom:'Empanada de carne cortada a cuchillo', precio:280000,  destino:'coc', rubro:'Empanadas' },
+  { id:'p3',  nom:'Bife de chorizo',                      precio:2680000, destino:'par', rubro:'Parrilla' },
+  { id:'p4',  nom:'Provoleta a la parrilla con orégano',  precio:1150000, destino:'par', rubro:'Para picar' },
+  { id:'p5',  nom:'Ensalada mixta',                       precio:890000,  destino:'coc', rubro:'Guarniciones' },
+  { id:'p6',  nom:'Ravioles de ricota con tuco',          precio:1620000, destino:'coc', rubro:'Pastas' },
+  { id:'p7',  nom:'Cerveza artesanal 1 L',                precio:950000,  destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p8',  nom:'Gaseosa 500 ml',                       precio:420000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p9',  nom:'Agua con gas 500 ml',                  precio:350000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p10', nom:'Flan casero con dulce de leche',       precio:650000,  destino:'coc', rubro:'Postres' },
+  { id:'p11', nom:'Vino de la casa, tinto',               precio:1400000, destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p12', nom:'Papas fritas',                         precio:820000,  destino:'coc', rubro:'Guarniciones' },
+
+  { id:'p13', nom:'Picada para dos con queso, salame y berenjenas', precio:2450000, destino:'coc', rubro:'Para picar' },
+  { id:'p14', nom:'Rabas',                                precio:2180000, destino:'coc', rubro:'Para picar' },
+  { id:'p15', nom:'Tabla de fiambres',                    precio:1780000, destino:'coc', rubro:'Para picar' },
+  { id:'p16', nom:'Bastones de muzzarella',               precio:980000,  destino:'coc', rubro:'Para picar' },
+  { id:'p17', nom:'Chorizo a la parrilla',                precio:680000,  destino:'par', rubro:'Para picar' },
+
+  { id:'p18', nom:'Empanada de jamón y queso',            precio:280000,  destino:'coc', rubro:'Empanadas' },
+  { id:'p19', nom:'Empanada de pollo',                    precio:280000,  destino:'coc', rubro:'Empanadas' },
+  { id:'p20', nom:'Empanada de humita',                   precio:290000,  destino:'coc', rubro:'Empanadas' },
+  { id:'p21', nom:'Empanada de verdura con salsa blanca', precio:290000,  destino:'coc', rubro:'Empanadas', agotado:true },
+  { id:'p22', nom:'Docena surtida',                       precio:3100000, destino:'coc', rubro:'Empanadas' },
+
+  { id:'p23', nom:'Asado de tira',                        precio:2380000, destino:'par', rubro:'Parrilla' },
+  { id:'p24', nom:'Vacío',                                precio:2540000, destino:'par', rubro:'Parrilla' },
+  { id:'p25', nom:'Entraña',                              precio:2890000, destino:'par', rubro:'Parrilla' },
+  { id:'p26', nom:'Matambrito de cerdo a la pizza',       precio:2260000, destino:'par', rubro:'Parrilla' },
+  { id:'p27', nom:'Morcilla',                             precio:620000,  destino:'par', rubro:'Parrilla' },
+  { id:'p28', nom:'Parrillada para dos',                  precio:4850000, destino:'par', rubro:'Parrilla' },
+  { id:'p29', nom:'Pollo al horno con papas',             precio:1740000, destino:'coc', rubro:'Parrilla' },
+
+  { id:'p30', nom:'Bife a caballo con papas fritas',      precio:2120000, destino:'par', rubro:'Minutas' },
+  { id:'p31', nom:'Suprema de pollo con puré',            precio:1680000, destino:'coc', rubro:'Minutas' },
+  { id:'p32', nom:'Tortilla de papas',                    precio:1140000, destino:'coc', rubro:'Minutas' },
+  { id:'p33', nom:'Sándwich de milanesa completo',        precio:1490000, destino:'coc', rubro:'Minutas' },
+  { id:'p34', nom:'Hamburguesa casera con papas',         precio:1520000, destino:'par', rubro:'Minutas' },
+  { id:'p35', nom:'Revuelto Gramajo',                     precio:1580000, destino:'coc', rubro:'Minutas' },
+
+  { id:'p36', nom:'Milanesa a caballo con papas',         precio:2050000, destino:'coc', rubro:'Milanesas' },
+  { id:'p37', nom:'Milanesa de pollo con ensalada',       precio:1830000, destino:'coc', rubro:'Milanesas' },
+  { id:'p38', nom:'Milanesa completa para dos',           precio:3680000, destino:'coc', rubro:'Milanesas' },
+  { id:'p39', nom:'Milanesa a la suiza',                  precio:2140000, destino:'coc', rubro:'Milanesas' },
+
+  { id:'p40', nom:'Sorrentinos de jamón y muzzarella con salsa mixta', precio:1880000, destino:'coc', rubro:'Pastas' },
+  { id:'p41', nom:'Ñoquis caseros',                       precio:1480000, destino:'coc', rubro:'Pastas' },
+  { id:'p42', nom:'Tallarines con estofado',              precio:1560000, destino:'coc', rubro:'Pastas' },
+  { id:'p43', nom:'Canelones de verdura',                 precio:1720000, destino:'coc', rubro:'Pastas', agotado:true },
+
+  { id:'p44', nom:'Papas a la provenzal',                 precio:920000,  destino:'coc', rubro:'Guarniciones' },
+  { id:'p45', nom:'Ensalada rusa',                        precio:840000,  destino:'coc', rubro:'Guarniciones' },
+  { id:'p46', nom:'Puré de papas',                        precio:760000,  destino:'coc', rubro:'Guarniciones' },
+  { id:'p47', nom:'Verduras grilladas',                   precio:980000,  destino:'par', rubro:'Guarniciones' },
+
+  { id:'p48', nom:'Budín de pan',                         precio:620000,  destino:'coc', rubro:'Postres' },
+  { id:'p49', nom:'Ensalada de fruta',                    precio:580000,  destino:'coc', rubro:'Postres' },
+  { id:'p50', nom:'Helado, dos bochas',                   precio:640000,  destino:'bar', rubro:'Postres' },
+  { id:'p51', nom:'Queso y dulce',                        precio:590000,  destino:'coc', rubro:'Postres' },
+  { id:'p52', nom:'Panqueque con dulce de leche',         precio:680000,  destino:'coc', rubro:'Postres' },
+
+  { id:'p53', nom:'Gaseosa 1,5 L',                        precio:780000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p54', nom:'Agua mineral 500 ml',                  precio:330000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p55', nom:'Sifón de soda',                        precio:410000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p56', nom:'Exprimido de naranja',                 precio:620000,  destino:'bar', rubro:'Bebidas' },
+  { id:'p57', nom:'Jarra de limonada',                    precio:890000,  destino:'bar', rubro:'Bebidas' },
+
+  { id:'p58', nom:'Porrón',                               precio:520000,  destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p59', nom:'Pinta tirada',                         precio:680000,  destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p60', nom:'Vino de la casa, blanco',              precio:1400000, destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p61', nom:'Copa de vino',                         precio:480000,  destino:'bar', rubro:'Cerveza y vino' },
+  { id:'p62', nom:'Malbec botella',                       precio:2650000, destino:'bar', rubro:'Cerveza y vino' },
+
+  { id:'p63', nom:'Café',                                 precio:290000,  destino:'bar', rubro:'Cafetería' },
+  { id:'p64', nom:'Cortado',                              precio:310000,  destino:'bar', rubro:'Cafetería' },
+  { id:'p65', nom:'Café con leche',                       precio:380000,  destino:'bar', rubro:'Cafetería' },
+  { id:'p66', nom:'Té',                                   precio:260000,  destino:'bar', rubro:'Cafetería' },
+  { id:'p67', nom:'Submarino',                            precio:520000,  destino:'bar', rubro:'Cafetería' },
+  { id:'p68', nom:'Café con tres medialunas',             precio:690000,  destino:'bar', rubro:'Cafetería' }
+];
+
+const ACLARACIONES = ['sin sal','jugoso','a punto','bien cocido','sin cebolla','sin tomate','sin queso','para compartir','sin hielo','que salga primero'];
+const prod = id => CARTA.find(p => p.id === id);
+
+const MESAS = [
+  { id:1,  numero:1,  capacidad:4, sector:'Salón' },
+  { id:2,  numero:2,  capacidad:2, sector:'Salón' },
+  { id:3,  numero:3,  capacidad:4, sector:'Salón' },
+  { id:4,  numero:4,  capacidad:6, sector:'Salón' },
+  { id:5,  numero:5,  capacidad:4, sector:'Salón' },
+  { id:6,  numero:6,  capacidad:4, sector:'Salón' },
+  { id:7,  numero:7,  capacidad:4, sector:'Salón' },
+  { id:8,  numero:8,  capacidad:2, sector:'Salón' },
+  { id:9,  numero:9,  capacidad:6, sector:'Patio' },
+  { id:10, numero:10, capacidad:4, sector:'Patio' },
+  { id:11, numero:11, capacidad:4, sector:'Patio' },
+  { id:12, numero:12, capacidad:2, sector:'Vereda' },
+  { id:13, numero:13, capacidad:2, sector:'Vereda' },
+  { id:14, numero:14, capacidad:4, sector:'Vereda' }
+];
+MESAS.forEach(m => m.pendienteLimpieza = false);
+
+let idSeq = 100;
+const nuevoId = () => 'x' + (++idSeq);
+const haceMin = m => Date.now() - m * 60000;
+
+/* Una cuenta puede cubrir varias mesas. Las comandas cuelgan de la cuenta
+   y se separan por destino de preparación. */
+let CUENTAS = [
+  { id:'c1', mesas:[2], comensales:2, mozo:'Nico', abierta:haceMin(9), cuentaPedida:null, comandas:[] },
+  { id:'c2', mesas:[3], comensales:4, mozo:'Nico', abierta:haceMin(34), cuentaPedida:null, comandas:[
+      { id:'k1', destino:'coc', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(31), items:[
+        { id:'i1', pid:'p1', cant:2, precio:1950000, acl:'una sin sal', estado:'entregado' },
+        { id:'i2', pid:'p12', cant:1, precio:820000, acl:'', estado:'entregado' }
+      ]},
+      { id:'k2', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(31), items:[
+        { id:'i3', pid:'p7', cant:1, precio:950000, acl:'', estado:'entregado' }
+      ]}
+    ]},
+  { id:'c3', mesas:[4,5], comensales:9, mozo:'Rita', abierta:haceMin(52), cuentaPedida:null, comandas:[
+      { id:'k3', destino:'par', ronda:1, estado:'enviada', origen:'mozo', enviada:haceMin(47), items:[
+        { id:'i4', pid:'p3', cant:4, precio:2680000, acl:'dos jugosos', estado:'entregado' },
+        { id:'i5', pid:'p4', cant:2, precio:1150000, acl:'', estado:'entregado' }
+      ]},
+      { id:'k4', destino:'bar', ronda:1, estado:'enviada', origen:'mozo', enviada:haceMin(47), items:[
+        { id:'i6', pid:'p11', cant:2, precio:1400000, acl:'', estado:'entregado' },
+        { id:'i7', pid:'p9', cant:2, precio:350000, acl:'', estado:'entregado' }
+      ]},
+      { id:'k5', destino:'coc', ronda:2, estado:'enviada', origen:'mozo', enviada:haceMin(11), items:[
+        { id:'i8', pid:'p10', cant:4, precio:650000, acl:'', estado:'en_cocina' }
+      ]}
+    ]},
+  { id:'c4', mesas:[7], comensales:4, mozo:'Nico', abierta:haceMin(23), cuentaPedida:null, comandas:[
+      { id:'k6', destino:'coc', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(19), items:[
+        { id:'i9', pid:'p6', cant:2, precio:1620000, acl:'', estado:'listo' },
+        { id:'i10', pid:'p5', cant:1, precio:890000, acl:'sin cebolla', estado:'listo' }
+      ]},
+      { id:'k7', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(19), items:[
+        { id:'i11', pid:'p8', cant:3, precio:420000, acl:'', estado:'entregado' }
+      ]}
+    ]},
+  { id:'c5', mesas:[9], comensales:6, mozo:'Rita', abierta:haceMin(78), cuentaPedida:haceMin(4), comandas:[
+      { id:'k8', destino:'coc', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(72), items:[
+        { id:'i12', pid:'p1', cant:3, precio:1950000, acl:'', estado:'entregado' },
+        { id:'i13', pid:'p2', cant:12, precio:280000, acl:'', estado:'entregado' },
+        { id:'i14', pid:'p12', cant:2, precio:820000, acl:'', estado:'anulado',
+          motivo:'El cliente se arrepintió', anuladoPor:'Marta', anuladoEn:haceMin(65) }
+      ]},
+      { id:'k9', destino:'bar', ronda:1, estado:'enviada', origen:'caja', enviada:haceMin(72), items:[
+        { id:'i15', pid:'p7', cant:3, precio:950000, acl:'', estado:'entregado' }
+      ]}
+    ]},
+  { id:'c6', mesas:[12], comensales:2, mozo:'Nico', abierta:haceMin(15), cuentaPedida:null, comandas:[
+      { id:'k10', destino:'bar', ronda:1, estado:'enviada', origen:'qr', enviada:haceMin(12), items:[
+        { id:'i16', pid:'p7', cant:2, precio:950000, acl:'', estado:'entregado' }
+      ]},
+      { id:'k11', destino:'coc', ronda:2, estado:'borrador', origen:'caja', enviada:null, items:[
+        { id:'i17', pid:'p2', cant:6, precio:280000, acl:'', estado:'pendiente' }
+      ]}
+    ]}
+];
+MESAS.find(m => m.id === 10).pendienteLimpieza = true;
+
+/* ── Estado de la interfaz ─────────────────────────────────── */
+const ui = {
+  filtro: 'todas',
+  mesaAbierta: null,
+  modo: 'normal',      // normal | juntar | mover
+  elegidas: [],
+  enLinea: true,
+  enCola: 0
+};
+
+/* ── Derivaciones ─────────────────────────────────────────── */
+const cuentaDe = mesaId => CUENTAS.find(c => c.mesas.includes(mesaId));
+const itemsDe = c => c ? c.comandas.flatMap(k => k.items.filter(i => i.estado !== 'anulado' && k.estado !== 'rechazada' && k.estado !== 'pendiente_aprobacion')) : [];
+const totalDe = c => itemsDe(c).reduce((s,i) => s + i.cant * i.precio, 0);
+const qrPendientes = c => c ? c.comandas.filter(k => k.estado === 'pendiente_aprobacion') : [];
+
+function estadoDe(mesaId){
+  const m = MESAS.find(x => x.id === mesaId);
+  const c = cuentaDe(mesaId);
+  if(!c) return m.pendienteLimpieza ? 'a_limpiar' : 'libre';
+  if(c.cuentaPedida) return 'cuenta';
+  const items = itemsDe(c);
+  if(items.length === 0) return 'ocupada';
+  if(items.some(i => i.estado !== 'entregado')) return 'pidio';
+  return 'servida';
+}
+
+const ETIQUETAS = {
+  libre:'Libre', ocupada:'Ocupada', pidio:'Pidió',
+  servida:'Servida', cuenta:'Pidió la cuenta', a_limpiar:'A limpiar'
+};
+const CLASES = {
+  libre:'e-libre', ocupada:'e-ocupada', pidio:'e-pidio',
+  servida:'e-servida', cuenta:'e-cuenta', a_limpiar:'e-limpiar'
+};
+const EST_ITEM = { pendiente:'Sin enviar', en_cocina:'En cocina', listo:'Listo', entregado:'Entregado', anulado:'Anulado' };
+
+const plata = cent => '$' + Math.round(cent/100).toLocaleString('es-AR');
+function transcurrido(desde){
+  const min = Math.floor((Date.now() - desde)/60000);
+  if(min < 60) return min + ' min';
+  return Math.floor(min/60) + ' h ' + String(min%60).padStart(2,'0');
+}
+
+/* ── Pintado ──────────────────────────────────────────────── */
+function pintarFiltros(){
+  const cont = document.getElementById('filtros');
+  const cuenta = {};
+  Object.keys(ETIQUETAS).forEach(e => cuenta[e] = 0);
+  MESAS.forEach(m => cuenta[estadoDe(m.id)]++);
+
+  let html = `<button class="chip" data-filtro="todas" aria-pressed="${ui.filtro==='todas'}">
+      Todas <span class="cant num">${MESAS.length}</span></button>
+    <div class="divisor"></div>`;
+  Object.keys(ETIQUETAS).forEach(e => {
+    html += `<button class="chip" data-filtro="${e}" aria-pressed="${ui.filtro===e}">
+      <span class="marca" style="background:var(--${e==='a_limpiar'?'limpiar':e})"></span>
+      ${ETIQUETAS[e]} <span class="cant num">${cuenta[e]}</span></button>`;
+  });
+  cont.innerHTML = html;
+  cont.querySelectorAll('.chip').forEach(b =>
+    b.onclick = () => { ui.filtro = b.dataset.filtro; pintar(); });
+}
+
+function pintarPiso(){
+  const cont = document.getElementById('piso');
+  const sectores = [...new Set(MESAS.map(m => m.sector))];
+  let html = '', hayAlgo = false;
+
+  sectores.forEach(sec => {
+    const lista = MESAS.filter(m => m.sector === sec &&
+      (ui.filtro === 'todas' || estadoDe(m.id) === ui.filtro));
+    if(!lista.length) return;
+    hayAlgo = true;
+    html += `<section class="sector"><h2>${sec}</h2><div class="grilla">`;
+    lista.forEach(m => {
+      const est = estadoDe(m.id);
+      const c = cuentaDe(m.id);
+      const qr = qrPendientes(c).length;
+      const elegida = ui.elegidas.includes(m.id);
+      let apagada = false;
+      if(ui.modo === 'juntar' && !elegida && est === 'libre') apagada = true;
+      if(ui.modo === 'mover' && est !== 'libre') apagada = true;
+
+      const compañeras = c && c.mesas.length > 1
+        ? c.mesas.filter(x => x !== m.id).map(x => MESAS.find(y => y.id === x).numero) : [];
+
+      html += `<button class="mesa ${CLASES[est]}${elegida?' elegida':''}${apagada?' apagada':''}" data-mesa="${m.id}">
+        ${qr ? `<span class="marca-qr">QR ${qr}</span>` : ''}
+        <div class="cab">
+          <div class="n num">${m.numero}</div>
+          <div class="cap">
+            <span>${c ? c.comensales + ' pers.' : m.capacidad + ' lugares'}</span>
+            ${compañeras.length ? `<span class="unida">con ${compañeras.join(' y ')}</span>` : ''}
+          </div>
+        </div>
+        <div class="est">${ETIQUETAS[est]}</div>
+        <div class="pie">
+          <span class="tiempo">${c ? transcurrido(c.abierta) : ''}</span>
+          <span class="plata">${c && totalDe(c) ? plata(totalDe(c)) : ''}</span>
+        </div>
+      </button>`;
+    });
+    html += `</div></section>`;
+  });
+
+  if(!hayAlgo){
+    html = `<div class="vacio">Ninguna mesa en estado “${ETIQUETAS[ui.filtro] || ui.filtro}” ahora mismo.</div>`;
+  }
+  cont.innerHTML = html;
+  cont.querySelectorAll('.mesa').forEach(b =>
+    b.onclick = () => tocarMesa(Number(b.dataset.mesa)));
+}
+
+function pintarAvisos(){
+  const cont = document.getElementById('avisos');
+  let html = '';
+  const conQr = CUENTAS.filter(c => qrPendientes(c).length);
+  if(conQr.length){
+    const mesas = conQr.flatMap(c => c.mesas.map(id => MESAS.find(m => m.id === id).numero));
+    const n = conQr.reduce((s,c) => s + qrPendientes(c).length, 0);
+    html += `<div class="aviso qr"><span class="pulso"></span>
+      <span><b>${n} pedido${n>1?'s':''} por QR</b> esperando aprobación · mesa ${mesas.join(', ')}</span>
+      <span class="sep"></span>
+      <button id="irAlQr">Revisar</button></div>`;
+  }
+  if(!ui.enLinea){
+    html += `<div class="aviso sinred">
+      <span>Sin internet. La caja sigue tomando pedidos y se sincroniza al volver.
+      ${ui.enCola ? `<b>${ui.enCola} sin enviar.</b>` : ''}
+      Los mozos y el QR no funcionan mientras dure el corte.</span></div>`;
+  }
+  cont.innerHTML = html;
+  const b = document.getElementById('irAlQr');
+  if(b) b.onclick = () => abrirMesa(conQr[0].mesas[0]);
+}
+
+function pintarAcciones(){
+  const cont = document.getElementById('acciones');
+  if(ui.modo === 'juntar'){
+    const nums = ui.elegidas.map(id => MESAS.find(m => m.id === id).numero);
+    cont.innerHTML = `<span class="texto">Elegí las mesas que se juntan${nums.length?': '+nums.join(' + '):''}</span>
+      <button class="btn" id="cancelar">Cancelar</button>
+      <button class="btn lleno" id="confirmar" ${ui.elegidas.length<2?'disabled':''}>Juntar ${nums.length||''}</button>`;
+    document.getElementById('cancelar').onclick = salirDeModo;
+    document.getElementById('confirmar').onclick = confirmarJuntar;
+    return;
+  }
+  if(ui.modo === 'mover'){
+    const n = MESAS.find(m => m.id === ui.elegidas[0]).numero;
+    cont.innerHTML = `<span class="texto">Tocá la mesa libre a donde se pasa la ${n}</span>
+      <button class="btn" id="cancelar">Cancelar</button>`;
+    document.getElementById('cancelar').onclick = salirDeModo;
+    return;
+  }
+  const libres = MESAS.filter(m => estadoDe(m.id) === 'libre').length;
+  const ocupadas = MESAS.length - libres;
+  cont.innerHTML = `<span class="texto">${ocupadas} mesas trabajando · ${libres} libres · Turno abierto 19:30</span>
+    <button class="btn" id="btnReiniciar">Reiniciar demo</button>
+    <button class="btn" id="btnQR">Códigos QR</button>
+    <button class="btn" id="btnJuntar">Juntar mesas</button>
+    <button class="btn" id="btnMover">Mover mesa</button>`;
+  document.getElementById('btnQR').onclick = abrirQR;
+  document.getElementById('btnReiniciar').onclick = () => { location.href = urlBase(); };
+  document.getElementById('btnJuntar').onclick = () => { ui.modo='juntar'; ui.elegidas=[]; pintar(); };
+  document.getElementById('btnMover').onclick = () => {
+    tostar('Tocá primero la mesa que querés mover.');
+    ui.modo='mover'; ui.elegidas=[]; pintar();
+  };
+}
+
+function pintar(){ pintarAvisos(); pintarFiltros(); pintarPiso(); pintarAcciones(); contadorCocina(); if(ui.mesaAbierta) pintarPanel(); }
+
+/* ── Toques sobre la grilla ───────────────────────────────── */
+function tocarMesa(id){
+  if(ui.modo === 'juntar'){
+    if(ui.elegidas.includes(id)) ui.elegidas = ui.elegidas.filter(x => x !== id);
+    else ui.elegidas.push(id);
+    pintar(); return;
+  }
+  if(ui.modo === 'mover'){
+    if(!ui.elegidas.length){
+      if(estadoDe(id) === 'libre'){ tostar('Esa mesa está libre. Elegí la que tiene gente.'); return; }
+      ui.elegidas = [id]; pintar(); return;
+    }
+    moverMesa(ui.elegidas[0], id); return;
+  }
+  abrirMesa(id);
+}
+
+function salirDeModo(){ ui.modo='normal'; ui.elegidas=[]; pintar(); }
+
+function confirmarJuntar(){
+  const ids = [...ui.elegidas];
+  const cuentas = [...new Set(ids.map(cuentaDe).filter(Boolean))];
+  let destino;
+  if(cuentas.length === 0){
+    destino = { id:nuevoId(), mesas:[], comensales:0, mozo:'Nico', abierta:Date.now(), cuentaPedida:null, comandas:[] };
+    CUENTAS.push(destino);
+  } else {
+    destino = cuentas[0];
+    cuentas.slice(1).forEach(c => {
+      destino.comandas.push(...c.comandas);
+      destino.comensales += c.comensales;
+      destino.mesas.push(...c.mesas);
+      CUENTAS = CUENTAS.filter(x => x !== c);
+    });
+  }
+  ids.forEach(id => { if(!destino.mesas.includes(id)) destino.mesas.push(id); });
+  destino.mesas = [...new Set(destino.mesas)];
+  if(!destino.comensales) destino.comensales = destino.mesas.reduce((s,id) => s + MESAS.find(m=>m.id===id).capacidad, 0);
+  const nums = destino.mesas.map(id => MESAS.find(m=>m.id===id).numero);
+  salirDeModo();
+  tostar('Mesas ' + nums.join(' y ') + ' juntadas en una sola cuenta.');
+}
+
+function moverMesa(desde, hasta){
+  const c = cuentaDe(desde);
+  c.mesas = c.mesas.filter(x => x !== desde);
+  c.mesas.push(hasta);
+  const a = MESAS.find(m=>m.id===desde).numero, b = MESAS.find(m=>m.id===hasta).numero;
+  salirDeModo();
+  tostar('La mesa ' + a + ' pasó a la ' + b + '. La cuenta se fue con ellos.');
+}
+
+/* ── Panel de detalle ─────────────────────────────────────── */
+function abrirMesa(id){
+  ui.mesaAbierta = id;
+  document.getElementById('panel').classList.add('abierto');
+  document.getElementById('telon').classList.add('abierto');
+  pintarPanel();
+  document.getElementById('btnCerrarPanel').focus();
+}
+function cerrarPanel(){
+  ui.mesaAbierta = null;
+  document.getElementById('panel').classList.remove('abierto');
+  document.getElementById('telon').classList.remove('abierto');
+}
+document.getElementById('btnCerrarPanel').onclick = cerrarPanel;
+document.getElementById('telon').onclick = cerrarPanel;
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(document.getElementById('modal').classList.contains('abierto')) cerrarModal();
+  else if(ui.mesaAbierta) cerrarPanel();
+  else if(ui.modo !== 'normal') salirDeModo();
+});
+
+function filaItem(i, editable){
+  const p = prod(i.pid);
+  return `<div class="item ${i.estado==='anulado'?'anulado':''}">
+    <div class="cant">${i.cant}</div>
+    <div class="cuerpo">
+      <div class="nom">${p.nom}</div>
+      ${i.acl ? `<div class="acl">${i.acl}</div>` : ''}
+      ${i.estado==='anulado' ? `<div class="motivo">Anuló ${i.anuladoPor}: ${i.motivo}</div>` : ''}
+    </div>
+    <div class="lado">
+      <span class="precio">${plata(i.cant*i.precio)}</span>
+      <span class="marca-est m-${i.estado}">${EST_ITEM[i.estado]}</span>
+      ${editable && i.estado!=='anulado' ? `<button class="mini" data-anular="${i.id}">Anular</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function pintarPanel(){
+  const id = ui.mesaAbierta;
+  const m = MESAS.find(x => x.id === id);
+  const c = cuentaDe(id);
+  const est = estadoDe(id);
+  const cuerpo = document.getElementById('panelCuerpo');
+  const pie = document.getElementById('panelPie');
+
+  const otras = c && c.mesas.length > 1
+    ? ' + ' + c.mesas.filter(x => x !== id).map(x => MESAS.find(y=>y.id===x).numero).join(' + ') : '';
+  document.getElementById('panelNum').textContent = m.numero + otras;
+  document.getElementById('panelTitulo').textContent = ETIQUETAS[est];
+  document.getElementById('panelSub').textContent = c
+    ? `${c.comensales} personas · abierta hace ${transcurrido(c.abierta)} · atiende ${c.mozo}`
+    : `${m.capacidad} lugares · ${m.sector}`;
+
+  /* Mesa sin cuenta */
+  if(!c){
+    cuerpo.innerHTML = est === 'a_limpiar'
+      ? `<div class="nada"><p>Se fueron y falta levantar.</p>
+         <small>Nadie puede sentarse acá hasta que alguien la marque limpia.</small></div>`
+      : `<div class="nada"><p>Mesa libre.</p><small>Abrila cuando se siente gente.</small></div>`;
+    pie.innerHTML = est === 'a_limpiar'
+      ? `<div class="botonera"><button class="btn lleno full" id="aLibre">Marcar limpia</button></div>`
+      : `<div class="botonera"><button class="btn lleno full" id="abrir">Abrir mesa</button></div>`;
+    const b1 = document.getElementById('abrir'); if(b1) b1.onclick = () => pedirComensales(id);
+    const b2 = document.getElementById('aLibre'); if(b2) b2.onclick = () => {
+      m.pendienteLimpieza = false; cerrarPanel(); pintar(); tostar('Mesa ' + m.numero + ' libre.');
+    };
+    return;
+  }
+
+  /* Mesa con cuenta */
+  let html = '';
+
+  qrPendientes(c).forEach(k => {
+    html += `<div class="tarjeta-qr">
+      <h3>Pedido desde el QR de la mesa</h3>
+      <p>Llegó hace ${transcurrido(k.creada)}. Nada va a ${DESTINOS[k.destino]} hasta que lo apruebes.</p>
+      ${k.items.map(i => filaItem(i,false)).join('')}
+      <div class="botonera">
+        <button class="btn mal" data-rechazar="${k.id}">Rechazar</button>
+        <button class="btn lleno" data-aprobar="${k.id}">Aprobar y enviar</button>
+      </div>
+    </div>`;
+  });
+
+  const enviadas = c.comandas.filter(k => k.estado === 'enviada');
+  const rondas = [...new Set(enviadas.map(k => k.ronda))].sort();
+  rondas.forEach(r => {
+    enviadas.filter(k => k.ronda === r).forEach(k => {
+      html += `<div class="ronda">
+        <div class="ronda-cab">
+          <span>Pedido ${r}</span>
+          <span class="destino">${DESTINOS[k.destino]}</span>
+          <span class="sep"></span>
+          <span>enviado hace ${transcurrido(k.enviada)}${k.origen==='qr'?' · por QR':''}</span>
+        </div>
+        ${k.items.map(i => filaItem(i,true)).join('')}
+      </div>`;
+    });
+  });
+
+  const borrador = c.comandas.filter(k => k.estado === 'borrador');
+  const itemsSinEnviar = borrador.flatMap(k => k.items);
+  if(itemsSinEnviar.length){
+    html += `<div class="ronda">
+      <div class="ronda-cab"><span>Sin enviar todavía</span><span class="sep"></span></div>
+      ${itemsSinEnviar.map(i => filaItem(i,true)).join('')}
+    </div>`;
+  }
+
+  if(!html) html = `<div class="nada"><p>Todavía no pidieron nada.</p>
+    <small>Cargá el pedido cuando el mozo te lo dicte.</small></div>`;
+
+  cuerpo.innerHTML = html;
+
+  const total = totalDe(c);
+  let botones = `<button class="btn" id="cargar">Cargar pedido</button>`;
+  if(itemsSinEnviar.length) botones += `<button class="btn aviso-btn" id="enviar">Enviar a cocina</button>`;
+  else if(itemsDe(c).some(i => i.estado === 'listo')) botones += `<button class="btn" id="entregar">Marcar entregado</button>`;
+  else if(!c.cuentaPedida) botones += `<button class="btn" id="pedirCuenta">Pidieron la cuenta</button>`;
+  else botones += `<button class="btn" id="pedirCuenta" disabled>Cuenta pedida</button>`;
+  if(c.mesas.length > 1) botones += `<button class="btn full" id="separar">Separar las mesas</button>`;
+  botones += `<button class="btn lleno full" id="cobrar">Cobrar y cerrar</button>`;
+
+  pie.innerHTML = `<div class="total"><span>Consumido</span><b class="num">${plata(total)}</b></div>
+    <div class="botonera">${botones}</div>`;
+
+  cuerpo.querySelectorAll('[data-anular]').forEach(b =>
+    b.onclick = () => pedirMotivoAnulacion(b.dataset.anular));
+  cuerpo.querySelectorAll('[data-aprobar]').forEach(b =>
+    b.onclick = () => aprobarQr(c, b.dataset.aprobar));
+  cuerpo.querySelectorAll('[data-rechazar]').forEach(b =>
+    b.onclick = () => rechazarQr(c, b.dataset.rechazar));
+
+  const g = id2 => document.getElementById(id2);
+  g('cargar').onclick = () => abrirPedido(id);
+  if(g('enviar')) g('enviar').onclick = () => enviarACocina(c);
+  if(g('entregar')) g('entregar').onclick = () => {
+    itemsDe(c).filter(i => i.estado === 'listo').forEach(i => i.estado = 'entregado');
+    pintar(); tostar('Entregado. La mesa quedó servida.');
+  };
+  if(g('pedirCuenta') && !g('pedirCuenta').disabled) g('pedirCuenta').onclick = () => {
+    c.cuentaPedida = Date.now(); pintar(); tostar('Mesa ' + m.numero + ' pidió la cuenta.');
+  };
+  if(g('separar')) g('separar').onclick = () => separarMesas(c);
+  g('cobrar').onclick = () => abrirCobro(id);
+}
+
+function enviarACocina(c){
+  const porDestino = {};
+  c.comandas.filter(k => k.estado === 'borrador').forEach(k => {
+    k.items.forEach(i => {
+      const d = prod(i.pid).destino;
+      (porDestino[d] = porDestino[d] || []).push(i);
+    });
+    c.comandas = c.comandas.filter(x => x !== k);
+  });
+  const ronda = Math.max(0, ...c.comandas.map(k => k.ronda)) + 1;
+  const destinos = [];
+  Object.keys(porDestino).forEach(d => {
+    porDestino[d].forEach(i => i.estado = 'en_cocina');
+    c.comandas.push({ id:nuevoId(), destino:d, ronda, estado:'enviada',
+      origen:'caja', enviada:Date.now(), items:porDestino[d] });
+    destinos.push(DESTINOS[d]);
+  });
+  if(!ui.enLinea) ui.enCola += destinos.length;
+  pintar();
+  tostar(destinos.length > 1
+    ? 'Salieron ' + destinos.length + ' comandas: ' + destinos.join(' y ') + '.'
+    : 'Comanda enviada a ' + destinos[0] + '.');
+}
+
+function aprobarQr(c, kid){
+  const k = c.comandas.find(x => x.id === kid);
+  k.estado = 'enviada';
+  k.enviada = Date.now();
+  k.items.forEach(i => i.estado = 'en_cocina');
+  pintar();
+  tostar('Pedido aprobado. Salió a ' + DESTINOS[k.destino] + '.');
+}
+function rechazarQr(c, kid){
+  abrirModal({
+    titulo:'Rechazar el pedido',
+    texto:'Se guarda con el motivo. El cliente ve que no se aprobó.',
+    opciones:['No es de esta mesa','Pidieron de más','Ya no hay stock','Otro'],
+    boton:'Rechazar',
+    peligro:true,
+    alConfirmar(motivo){
+      const k = c.comandas.find(x => x.id === kid);
+      k.estado = 'rechazada'; k.motivo = motivo;
+      pintar(); tostar('Pedido rechazado y registrado.');
+    }
+  });
+}
+
+function pedirMotivoAnulacion(itemId){
+  abrirModal({
+    titulo:'Anular el plato',
+    texto:'No se borra: queda anulado con tu nombre, el motivo y la hora.',
+    opciones:['Error de carga','El cliente se arrepintió','No hay stock','Salió mal','Otro'],
+    pin:true,
+    boton:'Anular',
+    peligro:true,
+    alConfirmar(motivo){
+      CUENTAS.forEach(c => c.comandas.forEach(k => k.items.forEach(i => {
+        if(i.id === itemId){
+          i.estado = 'anulado'; i.motivo = motivo;
+          i.anuladoPor = 'Marta'; i.anuladoEn = Date.now();
+        }
+      })));
+      pintar();
+      if(ped.cuenta) pintarPedido();
+      tostar('Anulado. Quedó registrado a nombre de Marta a las ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}) + '.');
+    }
+  });
+}
+
+function pedirComensales(mesaId){
+  abrirModal({
+    titulo:'Abrir la mesa',
+    texto:'¿Cuántos se sentaron?',
+    opciones:['1','2','3','4','5','6','8','10'],
+    boton:'Abrir',
+    alConfirmar(n){
+      CUENTAS.push({ id:nuevoId(), mesas:[mesaId], comensales:Number(n),
+        mozo:'Nico', abierta:Date.now(), cuentaPedida:null, comandas:[] });
+      pintar();
+      tostar('Mesa ' + MESAS.find(m=>m.id===mesaId).numero + ' abierta con ' + n + '.');
+    }
+  });
+}
+
+function separarMesas(c){
+  abrirCobro(c.mesas[0]);
+  cob.modo = 'items'; armarPartes(c.mesas.length); pintarCobro();
+  tostar('Separar mesas con consumo cargado es dividir la cuenta. Repartí los platos y cobrá cada parte.');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Armado de pedido (5.2)
+   ═══════════════════════════════════════════════════════════ */
+const ped = { cuenta:null, rubro:'todos', busca:'' };
+
+const sinTildes = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+
+function borradorDe(c){
+  let k = c.comandas.find(x => x.estado === 'borrador');
+  if(!k){
+    k = { id:nuevoId(), destino:null, ronda:0, estado:'borrador', origen:'caja', enviada:null, items:[] };
+    c.comandas.push(k);
+  }
+  return k;
+}
+
+function abrirPedido(mesaId){
+  let c = cuentaDe(mesaId);
+  if(!c) return;
+  ped.cuenta = c; ped.rubro = 'todos'; ped.busca = '';
+  document.getElementById('buscador').value = '';
+  cerrarPanel();
+  document.getElementById('vistaSalon').hidden = true;
+  document.getElementById('vistaPedido').hidden = false;
+  const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
+  document.getElementById('pedTitulo').textContent = 'Mesa ' + nums.join(' + ');
+  document.getElementById('pedSub').textContent = c.comensales + ' personas · atiende ' + c.mozo;
+  pintarPedido();
+  document.getElementById('carta').scrollTop = 0;
+}
+
+function volverAlSalon(){
+  document.getElementById('vistaPedido').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  document.getElementById('ticket').classList.remove('abierto');
+  ped.cuenta = null;
+  pintar();
+}
+document.getElementById('btnVolverSalon').onclick = volverAlSalon;
+
+document.getElementById('buscador').oninput = e => { ped.busca = e.target.value.trim(); pintarCarta(); };
+
+function pintarRubros(){
+  const cont = document.getElementById('rubros');
+  cont.innerHTML = `<button class="chip" data-rubro="todos" aria-pressed="${ped.rubro==='todos'}">Toda la carta</button>` +
+    RUBROS.map(r => `<button class="chip" data-rubro="${r}" aria-pressed="${ped.rubro===r}">${r}</button>`).join('');
+  cont.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    ped.rubro = b.dataset.rubro;
+    document.getElementById('buscador').value = ''; ped.busca = '';
+    pintarRubros(); pintarCarta();
+    document.getElementById('carta').scrollTop = 0;
+  });
+}
+
+function llevanDelProducto(pid){
+  const k = ped.cuenta.comandas.find(x => x.estado === 'borrador');
+  if(!k) return 0;
+  return k.items.filter(i => i.pid === pid).reduce((s,i) => s + i.cant, 0);
+}
+
+function tarjetaPlato(p){
+  const n = llevanDelProducto(p.id);
+  if(p.agotado){
+    return `<div class="plato agotado">
+      <div class="nom">${p.nom}</div>
+      <div class="fila"><span class="precio">${plata(p.precio)}</span><span class="sinstock">Agotado</span></div>
+    </div>`;
+  }
+  return `<button class="plato" data-add="${p.id}">
+    ${n ? `<span class="llevan">${n} en el pedido</span>` : ''}
+    <div class="nom">${p.nom}</div>
+    <div class="fila"><span class="precio">${plata(p.precio)}</span><span class="dest">${DESTINOS[p.destino]}</span></div>
+  </button>`;
+}
+
+function pintarCarta(){
+  const cont = document.getElementById('carta');
+  let html = '';
+  if(ped.busca){
+    const q = sinTildes(ped.busca);
+    const hallados = CARTA.filter(p => sinTildes(p.nom).includes(q));
+    html = hallados.length
+      ? `<div class="rubro-tit">${hallados.length} resultado${hallados.length>1?'s':''}</div>
+         <div class="rejilla">${hallados.map(tarjetaPlato).join('')}</div>`
+      : `<div class="nada"><p>Ningún plato se llama así.</p>
+         <small>Probá con una palabra sola, como “mila” o “empanada”.</small></div>`;
+  } else {
+    const rubros = ped.rubro === 'todos' ? RUBROS : [ped.rubro];
+    rubros.forEach(r => {
+      const lista = CARTA.filter(p => p.rubro === r);
+      if(!lista.length) return;
+      html += `<div class="rubro-tit">${r}</div>
+        <div class="rejilla">${lista.map(tarjetaPlato).join('')}</div>`;
+    });
+  }
+  cont.innerHTML = html;
+  cont.querySelectorAll('[data-add]').forEach(b => b.onclick = () => agregar(b.dataset.add));
+}
+
+function agregar(pid){
+  const k = borradorDe(ped.cuenta);
+  const p = prod(pid);
+  const existe = k.items.find(i => i.pid === pid && !i.acl);
+  if(existe) existe.cant++;
+  else k.items.push({ id:nuevoId(), pid, cant:1, precio:p.precio, acl:'', estado:'pendiente' });
+  pintarPedido();
+}
+
+function cambiarCantidad(itemId, delta){
+  const k = borradorDe(ped.cuenta);
+  const i = k.items.find(x => x.id === itemId);
+  if(!i) return;
+  i.cant += delta;
+  if(i.cant <= 0) k.items = k.items.filter(x => x !== i);
+  pintarPedido();
+}
+
+function pintarTicket(){
+  const c = ped.cuenta;
+  const k = c.comandas.find(x => x.estado === 'borrador');
+  const nuevos = k ? k.items : [];
+  const enviados = c.comandas.filter(x => x.estado === 'enviada')
+    .flatMap(x => x.items.map(i => ({...i, destino:x.destino, ronda:x.ronda})));
+
+  const lista = document.getElementById('ticketLista');
+  let html = '';
+
+  if(nuevos.length){
+    html += nuevos.map(i => {
+      const p = prod(i.pid);
+      return `<div class="linea">
+        <div class="contador">
+          <button data-menos="${i.id}" aria-label="Uno menos">−</button>
+          <span class="v">${i.cant}</span>
+          <button data-mas="${i.id}" aria-label="Uno más">+</button>
+        </div>
+        <div class="txt">
+          <b>${p.nom}</b>
+          ${i.acl
+            ? `<div class="acl">${i.acl} · <button data-acl="${i.id}">cambiar</button></div>`
+            : `<button class="ponerAcl" data-acl="${i.id}">Agregar aclaración</button>`}
+        </div>
+        <div class="der"><span class="precio">${plata(i.cant*i.precio)}</span></div>
+      </div>`;
+    }).join('');
+  } else {
+    html += `<div class="nada"><p>Todavía no cargaste nada.</p>
+      <small>Tocá un plato de la carta para sumarlo.</small></div>`;
+  }
+
+  if(enviados.length){
+    html += `<div class="ya"><div class="ya-cab">Ya está en cocina</div>` +
+      enviados.map(i => {
+        const p = prod(i.pid);
+        return `<div class="linea">
+          <div class="contador"><span class="v">${i.cant}</span></div>
+          <div class="txt"><b>${p.nom}</b>
+            ${i.acl ? `<div class="acl">${i.acl}</div>` : ''}
+            <div class="ponerAcl" style="text-decoration:none">${DESTINOS[i.destino]} · ${EST_ITEM[i.estado]}</div>
+          </div>
+          <div class="der"><span class="precio">${plata(i.cant*i.precio)}</span>
+            ${i.estado!=='anulado' ? `<button class="mini" data-anular="${i.id}">Anular</button>` : ''}
+          </div>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+
+  lista.innerHTML = html;
+  lista.querySelectorAll('[data-mas]').forEach(b => b.onclick = () => cambiarCantidad(b.dataset.mas, 1));
+  lista.querySelectorAll('[data-menos]').forEach(b => b.onclick = () => cambiarCantidad(b.dataset.menos, -1));
+  lista.querySelectorAll('[data-acl]').forEach(b => b.onclick = () => pedirAclaracion(b.dataset.acl));
+  lista.querySelectorAll('[data-anular]').forEach(b => b.onclick = () => pedirMotivoAnulacion(b.dataset.anular));
+
+  const totalNuevo = nuevos.reduce((s,i) => s + i.cant*i.precio, 0);
+  const destinos = [...new Set(nuevos.map(i => prod(i.pid).destino))];
+
+  document.getElementById('ticketCab').textContent = nuevos.length
+    ? 'Pedido nuevo, sin enviar' : 'Pedido nuevo';
+
+  document.getElementById('ticketPie').innerHTML = `
+    ${destinos.length > 1 ? `<div class="reparto">Sale en ${destinos.length} comandas:
+      ${destinos.map(d => `<span>${DESTINOS[d]}</span>`).join('')}</div>` : ''}
+    <div class="total"><span>A enviar</span><b class="num">${plata(totalNuevo)}</b></div>
+    <button class="btn lleno ancho" id="btnEnviar" ${nuevos.length?'':'disabled'}>Enviar a cocina</button>`;
+
+  const be = document.getElementById('btnEnviar');
+  if(be && nuevos.length) be.onclick = () => {
+    enviarACocina(ped.cuenta);
+    volverAlSalon();
+  };
+
+  document.getElementById('abrirTicket').innerHTML = nuevos.length
+    ? `<span>${nuevos.reduce((s,i)=>s+i.cant,0)} ítems sin enviar</span>
+       <span class="plata num">${plata(totalNuevo)}</span>
+       <button class="btn lleno" id="verTicket">Ver pedido</button>`
+    : `<span>Tocá un plato para empezar el pedido</span>
+       <button class="btn" id="verTicket">Ver mesa</button>`;
+  document.getElementById('verTicket').onclick = () =>
+    document.getElementById('ticket').classList.toggle('abierto');
+}
+
+function pintarPedido(){ pintarRubros(); pintarCarta(); pintarTicket(); }
+
+function pedirAclaracion(itemId){
+  const k = borradorDe(ped.cuenta);
+  const i = k.items.find(x => x.id === itemId);
+  if(!i) return;
+  const p = prod(i.pid);
+  const caja = document.getElementById('cajaModal');
+  caja.innerHTML = `<h3>${p.nom}</h3>
+    <p>Lo que escribas acá sale impreso en la comanda de ${DESTINOS[p.destino]}.</p>
+    <div class="opciones" id="ops">${ACLARACIONES.map(a => `<button data-op="${a}">${a}</button>`).join('')}</div>
+    <input type="text" id="txtAcl" placeholder="O escribilo vos" value="${i.acl.replace(/"/g,'&quot;')}">
+    <div class="botonera">
+      <button class="btn" id="mCancelar">Cancelar</button>
+      <button class="btn lleno" id="mOk">Guardar</button>
+    </div>`;
+  document.getElementById('modal').classList.add('abierto');
+  const campo = document.getElementById('txtAcl');
+  caja.querySelectorAll('#ops button').forEach(b => b.onclick = () => {
+    const actual = campo.value.trim();
+    campo.value = actual ? actual + ', ' + b.dataset.op : b.dataset.op;
+  });
+  document.getElementById('mCancelar').onclick = cerrarModal;
+  document.getElementById('mOk').onclick = () => {
+    const v = campo.value.trim();
+    /* Si el ítem tenía cantidad > 1, la aclaración separa una unidad. */
+    if(v && i.cant > 1){
+      i.cant--;
+      k.items.push({ id:nuevoId(), pid:i.pid, cant:1, precio:i.precio, acl:v, estado:'pendiente' });
+    } else {
+      i.acl = v;
+    }
+    cerrarModal();
+    pintarPedido();
+  };
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   Cocina (5.4)
+   Umbrales: hasta 6 min normal, hasta 12 ámbar, más rojo.
+   ═══════════════════════════════════════════════════════════ */
+const UMBRAL_MEDIO = 6, UMBRAL_TARDE = 12;
+const coc = { destino:'todos' };
+
+function comandasDeCocina(){
+  const salida = [];
+  CUENTAS.forEach(c => {
+    c.comandas.forEach(k => {
+      if(k.estado !== 'enviada') return;
+      const vivos = k.items.filter(i => i.estado === 'en_cocina' || i.estado === 'listo');
+      if(!vivos.length) return;
+      salida.push({
+        k, c, items:vivos,
+        mesas:c.mesas.map(id => MESAS.find(m => m.id === id).numero),
+        min:Math.floor((Date.now() - k.enviada)/60000),
+        lista:vivos.every(i => i.estado === 'listo')
+      });
+    });
+  });
+  return salida.sort((a,b) => a.k.enviada - b.k.enviada);
+}
+
+function irACocina(){
+  document.getElementById('vistaSalon').hidden = true;
+  document.getElementById('vistaPedido').hidden = true;
+  document.getElementById('vistaCocina').hidden = false;
+  pintarCocina();
+}
+document.getElementById('btnCocina').onclick = irACocina;
+document.getElementById('btnVolverDeCocina').onclick = () => {
+  document.getElementById('vistaCocina').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  pintar();
+};
+
+function pintarDestinos(){
+  const todas = comandasDeCocina();
+  const cont = document.getElementById('destinos');
+  const cuenta = d => todas.filter(x => x.k.destino === d && !x.lista).length;
+  cont.innerHTML =
+    `<button class="chip" data-d="todos" aria-pressed="${coc.destino==='todos'}">
+      Todo <span class="cant num">${todas.filter(x=>!x.lista).length}</span></button>` +
+    Object.keys(DESTINOS).map(d =>
+      `<button class="chip" data-d="${d}" aria-pressed="${coc.destino===d}">
+        ${DESTINOS[d]} <span class="cant num">${cuenta(d)}</span></button>`).join('');
+  cont.querySelectorAll('.chip').forEach(b =>
+    b.onclick = () => { coc.destino = b.dataset.d; pintarCocina(); });
+}
+
+function tarjetaComanda(x){
+  const clase = x.lista ? 'c-lista' : x.min >= UMBRAL_TARDE ? 'c-tarde' : x.min >= UMBRAL_MEDIO ? 'c-media' : '';
+  return `<article class="comanda ${clase}">
+    <div class="comanda-cab">
+      <div>
+        <div class="nro num">${x.mesas.join('+')}</div>
+        <div class="meta">${DESTINOS[x.k.destino]} · pedido ${x.k.ronda}${x.k.origen==='qr'?' · por QR':''}</div>
+      </div>
+      <div class="espera num">${x.min}<small>min ${x.lista?'lista':'esperando'}</small></div>
+    </div>
+    <div class="comanda-items">
+      ${x.items.map(i => `<button class="plato-fila ${i.estado==='listo'?'hecho':''}" data-item="${i.id}">
+        <span class="c num">${i.cant}</span>
+        <span class="t"><b>${prod(i.pid).nom}</b>${i.acl?`<span class="acl">${i.acl}</span>`:''}</span>
+        <span class="tilde">✓</span>
+      </button>`).join('')}
+    </div>
+    <div class="comanda-pie">
+      ${x.lista
+        ? `<button class="btn" data-desmarcar="${x.k.id}">Todavía no está</button>`
+        : `<button class="btn lleno" data-toda="${x.k.id}">Comanda lista</button>`}
+    </div>
+  </article>`;
+}
+
+function pintarCocina(){
+  pintarDestinos();
+  const todas = comandasDeCocina()
+    .filter(x => coc.destino === 'todos' || x.k.destino === coc.destino);
+  const pendientes = todas.filter(x => !x.lista);
+  const listas = todas.filter(x => x.lista);
+  const cont = document.getElementById('tablero');
+
+  let html = '';
+  if(pendientes.length){
+    html += `<div class="bloque-tit">Preparando</div>
+      <div class="tablero-grilla">${pendientes.map(tarjetaComanda).join('')}</div>`;
+  } else {
+    html += `<div class="nada"><p>No hay nada esperando.</p>
+      <small>Las comandas nuevas entran acá solas, la más vieja primero.</small></div>`;
+  }
+  if(listas.length){
+    html += `<div class="bloque-tit">Listas para levantar</div>
+      <div class="tablero-grilla">${listas.map(tarjetaComanda).join('')}</div>`;
+  }
+  cont.innerHTML = html;
+
+  cont.querySelectorAll('[data-item]').forEach(b => b.onclick = () => {
+    const i = buscarItem(b.dataset.item);
+    i.estado = i.estado === 'listo' ? 'en_cocina' : 'listo';
+    pintarCocina();
+  });
+  cont.querySelectorAll('[data-toda]').forEach(b => b.onclick = () => {
+    const k = buscarComanda(b.dataset.toda);
+    k.items.forEach(i => { if(i.estado === 'en_cocina') i.estado = 'listo'; });
+    pintarCocina();
+    tostar('Comanda lista. El mozo la ve en el salón.');
+  });
+  cont.querySelectorAll('[data-desmarcar]').forEach(b => b.onclick = () => {
+    const k = buscarComanda(b.dataset.desmarcar);
+    k.items.forEach(i => { if(i.estado === 'listo') i.estado = 'en_cocina'; });
+    pintarCocina();
+  });
+}
+
+function buscarItem(id){
+  for(const c of CUENTAS) for(const k of c.comandas)
+    for(const i of k.items) if(i.id === id) return i;
+}
+function buscarComanda(id){
+  for(const c of CUENTAS) { const k = c.comandas.find(x => x.id === id); if(k) return k; }
+}
+
+function contadorCocina(){
+  const n = comandasDeCocina().filter(x => !x.lista).length;
+  document.getElementById('txtCocina').textContent = n ? 'Cocina · ' + n : 'Cocina';
+  const tarde = comandasDeCocina().some(x => !x.lista && x.min >= UMBRAL_TARDE);
+  document.getElementById('btnCocina').classList.toggle('off', tarde);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Cobro, división de cuenta y cierre (5.3)
+   Regla: no se cierra una mesa con plata faltante ni con
+   consumo sin asignar.
+   ═══════════════════════════════════════════════════════════ */
+const cob = { cuenta:null, modo:'junto', partes:[], activa:0 };
+
+function itemsCobrables(c){
+  return c.comandas
+    .filter(k => k.estado === 'enviada' || k.estado === 'borrador')
+    .flatMap(k => k.items.filter(i => i.estado !== 'anulado'));
+}
+function itemsAnulados(c){
+  return c.comandas.flatMap(k => k.items.filter(i => i.estado === 'anulado'));
+}
+const consumido = c => itemsCobrables(c).reduce((s,i) => s + i.cant*i.precio, 0);
+const aCobrar   = c => consumido(c) - (c.descuento ? c.descuento.monto : 0);
+const pagado    = c => (c.pagos||[]).reduce((s,p) => s + p.monto, 0);
+const propinas  = c => (c.pagos||[]).reduce((s,p) => s + p.propina, 0);
+const falta     = c => aCobrar(c) - pagado(c);
+
+function abrirCobro(mesaId){
+  const c = cuentaDe(mesaId);
+  if(!c) return;
+  if(!c.pagos) c.pagos = [];
+  if(!c.descuento) c.descuento = { monto:0, motivo:'' };
+  const sinEnviar = c.comandas.filter(k => k.estado === 'borrador').flatMap(k => k.items).length;
+  if(sinEnviar) tostar('Ojo: hay ' + sinEnviar + ' ítem(s) cargados que nunca salieron a cocina. Se cobran igual.');
+
+  cob.cuenta = c; cob.modo = 'junto'; cob.activa = 0;
+  armarPartes();
+  cerrarPanel();
+  document.getElementById('vistaSalon').hidden = true;
+  document.getElementById('vistaCobro').hidden = false;
+  const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
+  document.getElementById('cbTitulo').textContent = 'Cobrar mesa ' + nums.join(' + ');
+  document.getElementById('cbSub').textContent = c.comensales + ' personas · abierta hace ' + transcurrido(c.abierta);
+  pintarCobro();
+}
+document.getElementById('btnVolverDeCobro').onclick = () => {
+  document.getElementById('vistaCobro').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  cob.cuenta = null;
+  pintar();
+};
+
+function armarPartes(n){
+  const c = cob.cuenta;
+  if(cob.modo === 'junto'){
+    cob.partes = [{ nombre:'La mesa entera', fijo:aCobrar(c), asigna:{}, pago:null }];
+    return;
+  }
+  const cuantas = n || Math.max(2, cob.partes.length || c.comensales || 2);
+  const base = cob.modo === 'iguales' ? Math.floor(aCobrar(c)/cuantas) : 0;
+  const resto = cob.modo === 'iguales' ? aCobrar(c) - base*cuantas : 0;
+  cob.partes = Array.from({length:cuantas}, (_,j) => ({
+    nombre:'Persona ' + (j+1),
+    fijo: cob.modo === 'iguales' ? base + (j === 0 ? resto : 0) : null,
+    asigna:{}, pago:null
+  }));
+  cob.activa = 0;
+}
+
+const asignadasDe = itemId => cob.partes.reduce((s,p) => s + (p.asigna[itemId]||0), 0);
+function montoParte(p){
+  if(p.fijo !== null && p.fijo !== undefined) return p.fijo;
+  return Object.keys(p.asigna).reduce((s,id) => {
+    const i = buscarItem(id);
+    return s + (i ? p.asigna[id]*i.precio : 0);
+  }, 0);
+}
+function sinAsignar(){
+  return itemsCobrables(cob.cuenta).reduce((s,i) => s + (i.cant - asignadasDe(i.id)), 0);
+}
+
+function pintarConsumo(){
+  const c = cob.cuenta;
+  const cont = document.getElementById('cbConsumo');
+  const porItems = cob.modo === 'items';
+  let html = `<div class="cb-tit">Consumido</div>`;
+
+  itemsCobrables(c).forEach(i => {
+    const p = prod(i.pid);
+    const libres = i.cant - asignadasDe(i.id);
+    html += `<div class="cb-fila">
+      <span class="c num">${i.cant}</span>
+      <span class="t"><b>${p.nom}</b>${i.acl?`<span class="acl">${i.acl}</span>`:''}
+      ${porItems ? `<span class="cb-repartir">
+        ${cob.partes.map((pa,j) => {
+          const t = pa.asigna[i.id]||0;
+          return `<button data-asig="${i.id}" data-parte="${j}" class="${t?'tiene':''}">${pa.nombre.replace('Persona','P')}${t?' · '+t:''}</button>`;
+        }).join('')}
+        ${libres ? `<button class="" style="pointer-events:none;border-style:dashed">quedan ${libres}</button>` : ''}
+      </span>` : ''}
+      </span>
+      <span class="p">${plata(i.cant*i.precio)}</span>
+    </div>`;
+  });
+
+  const anulados = itemsAnulados(c);
+  if(anulados.length){
+    html += `<div class="cb-tit arriba">Anulado, no se cobra</div>`;
+    anulados.forEach(i => {
+      html += `<div class="cb-fila anulada">
+        <span class="c num">${i.cant}</span>
+        <span class="t"><b>${prod(i.pid).nom}</b>
+        <span class="acl">${i.anuladoPor}: ${i.motivo}</span></span>
+        <span class="p">${plata(i.cant*i.precio)}</span>
+      </div>`;
+    });
+  }
+
+  if(porItems && sinAsignar()){
+    html += `<div class="cb-sobra">Faltan repartir ${sinAsignar()} ítem(s).
+      Tocá el nombre de la persona debajo de cada plato. No se puede cerrar la mesa hasta que no quede nada suelto.</div>`;
+  }
+  cont.innerHTML = html;
+
+  cont.querySelectorAll('[data-asig]').forEach(b => b.onclick = () => {
+    const id = b.dataset.asig, j = Number(b.dataset.parte);
+    const i = buscarItem(id), p = cob.partes[j];
+    const tiene = p.asigna[id]||0;
+    if(asignadasDe(id) < i.cant) p.asigna[id] = tiene + 1;   /* suma una unidad */
+    else if(tiene) p.asigna[id] = tiene - 1;                  /* si ya no queda, devuelve */
+    else { tostar('Ese plato ya está todo repartido. Sacáselo antes a otra persona.'); return; }
+    if(!p.asigna[id]) delete p.asigna[id];
+    pintarCobro();
+  });
+}
+
+function pintarPartes(){
+  const c = cob.cuenta;
+  document.getElementById('cbModos').innerHTML = `
+    <button data-modo="junto"   aria-pressed="${cob.modo==='junto'}">Todo junto</button>
+    <button data-modo="iguales" aria-pressed="${cob.modo==='iguales'}">Partes iguales</button>
+    <button data-modo="items"   aria-pressed="${cob.modo==='items'}">Cada uno lo suyo</button>`;
+  document.getElementById('cbModos').querySelectorAll('button').forEach(b =>
+    b.onclick = () => {
+      if(c.pagos.length){ tostar('Ya hay pagos hechos. Anulá la mesa o seguí con esta división.'); return; }
+      cob.modo = b.dataset.modo; armarPartes(); pintarCobro();
+    });
+
+  const cuantos = document.getElementById('cbCuantos');
+  if(cob.modo === 'junto'){ cuantos.innerHTML = ''; }
+  else {
+    cuantos.innerHTML = `<div class="cb-cuantos">
+      <span>¿Entre cuántos?</span>
+      <span class="contador">
+        <button id="menosP" aria-label="Uno menos">−</button>
+        <span class="v">${cob.partes.length}</span>
+        <button id="masP" aria-label="Uno más">+</button>
+      </span></div>`;
+    document.getElementById('masP').onclick = () => { armarPartes(cob.partes.length+1); pintarCobro(); };
+    document.getElementById('menosP').onclick = () => {
+      if(cob.partes.length <= 2) return;
+      armarPartes(cob.partes.length-1); pintarCobro();
+    };
+  }
+
+  document.getElementById('cbPartes').innerHTML = cob.partes.map((p,j) => {
+    const m = montoParte(p);
+    const detalle = p.pago
+      ? p.pago.metodo + (p.pago.propina ? ' · propina ' + plata(p.pago.propina) : '')
+      : cob.modo === 'items'
+        ? Object.keys(p.asigna).reduce((s,id) => s + p.asigna[id], 0) + ' ítems'
+        : '';
+    return `<div class="cb-parte ${p.pago?'pagada':''}">
+      <span class="nom">${p.nombre}${detalle?`<small>${detalle}</small>`:''}</span>
+      <span class="mon num">${plata(m)}</span>
+      ${p.pago
+        ? `<button class="btn mal" data-deshacer="${j}">Deshacer</button>`
+        : `<button class="btn lleno" data-cobrar="${j}" ${m<=0?'disabled':''}>Cobrar</button>`}
+    </div>`;
+  }).join('');
+
+  document.getElementById('cbPartes').querySelectorAll('[data-cobrar]').forEach(b =>
+    b.onclick = () => cobrarParte(Number(b.dataset.cobrar)));
+  document.getElementById('cbPartes').querySelectorAll('[data-deshacer]').forEach(b =>
+    b.onclick = () => {
+      const p = cob.partes[Number(b.dataset.deshacer)];
+      c.pagos = c.pagos.filter(x => x !== p.pago);
+      p.pago = null; pintarCobro();
+    });
+}
+
+function pintarPie(){
+  const c = cob.cuenta;
+  const f = falta(c), sobra = cob.modo === 'items' ? sinAsignar() : 0;
+  const puede = f <= 0 && sobra === 0;
+  document.getElementById('cbPie').innerHTML = `
+    <div class="cb-cuentas">
+      <div><span>Consumido</span><span class="num">${plata(consumido(c))}</span></div>
+      ${c.descuento.monto ? `<div><span>Descuento · ${c.descuento.motivo}</span><span class="num">−${plata(c.descuento.monto)}</span></div>` : ''}
+      ${propinas(c) ? `<div><span>Propina</span><span class="num">${plata(propinas(c))}</span></div>` : ''}
+      <div class="fuerte"><span>A cobrar</span><span class="num">${plata(aCobrar(c))}</span></div>
+      <div><span>Cobrado</span><span class="num">${plata(pagado(c))}</span></div>
+      <div class="${f>0?'falta':'listo'}"><span>${f>0?'Falta':'Cuenta saldada'}</span><span class="num">${f>0?plata(f):'✓'}</span></div>
+    </div>
+    <div class="cb-acciones">
+      <button class="btn" id="cbDescuento">Descuento</button>
+      <button class="btn" id="cbImprimir">Imprimir cuenta</button>
+      <button class="btn lleno full" id="cbCerrar" ${puede?'':'disabled'}>Cerrar mesa y liberar</button>
+    </div>`;
+  document.getElementById('cbDescuento').onclick = pedirDescuento;
+  document.getElementById('cbImprimir').onclick = imprimirCuenta;
+  if(puede) document.getElementById('cbCerrar').onclick = cerrarMesa;
+}
+
+function pintarCobro(){ pintarConsumo(); pintarPartes(); pintarPie(); }
+
+function cobrarParte(j){
+  const c = cob.cuenta, p = cob.partes[j], monto = montoParte(p);
+  let metodo = 'Efectivo', propina = 0, recibido = 0;
+
+  const dibujar = () => {
+    const vuelto = recibido - (monto + propina);
+    document.getElementById('cajaModal').innerHTML = `
+      <h3>${p.nombre}</h3>
+      <p>Cobrar ${plata(monto)}${propina?' más '+plata(propina)+' de propina':''}.</p>
+      <label>Cómo paga</label>
+      <div class="opciones" id="met">
+        ${['Efectivo','Tarjeta','Transferencia'].map(x =>
+          `<button data-m="${x}" aria-pressed="${metodo===x}">${x}</button>`).join('')}
+      </div>
+      <label>Propina</label>
+      <div class="opciones" id="pro">
+        ${[0,10,15].map(x => `<button data-p="${x}" aria-pressed="${propina===Math.round(monto*x/100)&&(x||!propina)}">${x?x+'%':'Sin propina'}</button>`).join('')}
+      </div>
+      ${metodo === 'Efectivo' ? `
+        <label for="rec">Con cuánto paga</label>
+        <input type="number" id="rec" inputmode="numeric" placeholder="0" value="${recibido?Math.round(recibido/100):''}">
+        <div class="cb-vuelto"><span>Vuelto</span>
+          <b class="${vuelto<0?'corto':''}">${recibido?plata(Math.abs(vuelto)):'—'}${vuelto<0&&recibido?' de menos':''}</b></div>` : ''}
+      <div class="botonera">
+        <button class="btn" id="mCancelar">Cancelar</button>
+        <button class="btn lleno" id="mOk" ${metodo==='Efectivo'&&recibido&&vuelto<0?'disabled':''}>Cobrado</button>
+      </div>`;
+
+    const caja = document.getElementById('cajaModal');
+    caja.querySelectorAll('#met button').forEach(b => b.onclick = () => { metodo = b.dataset.m; dibujar(); });
+    caja.querySelectorAll('#pro button').forEach(b => b.onclick = () => {
+      propina = Math.round(monto * Number(b.dataset.p) / 100); dibujar();
+    });
+    const rec = document.getElementById('rec');
+    if(rec) rec.oninput = e => {
+      recibido = Math.round(Number(e.target.value||0)) * 100;
+      const v = recibido - (monto + propina);
+      const b = caja.querySelector('.cb-vuelto b');
+      b.textContent = recibido ? plata(Math.abs(v)) + (v<0?' de menos':'') : '—';
+      b.classList.toggle('corto', v < 0);
+      document.getElementById('mOk').disabled = recibido > 0 && v < 0;
+    };
+    document.getElementById('mCancelar').onclick = cerrarModal;
+    document.getElementById('mOk').onclick = () => {
+      p.pago = { metodo, monto, propina, confirmado:metodo !== 'Transferencia', creado:Date.now() };
+      c.pagos.push(p.pago);
+      cerrarModal(); pintarCobro();
+      tostar(metodo === 'Transferencia'
+        ? 'Anotado como transferencia. Confirmá en el celular que la plata llegó.'
+        : 'Cobrado ' + plata(monto + propina) + ' en ' + metodo.toLowerCase() + '.');
+    };
+  };
+  dibujar();
+  document.getElementById('modal').classList.add('abierto');
+}
+
+function pedirDescuento(){
+  const c = cob.cuenta;
+  abrirModal({
+    titulo:'Descuento sobre la cuenta',
+    texto:'Queda registrado con tu nombre, el motivo y la hora, igual que una anulación.',
+    opciones:['5%','10%','15%','El plato que salió mal','Otro'],
+    pin:true,
+    boton:'Aplicar',
+    alConfirmar(v){
+      const pct = parseInt(v);
+      c.descuento = {
+        monto: pct ? Math.round(consumido(c)*pct/100) : Math.round(consumido(c)*0.1),
+        motivo: pct ? 'descuento del ' + v : v
+      };
+      if(!c.pagos.length) armarPartes(cob.modo==='junto'?null:cob.partes.length);
+      pintarCobro();
+      tostar('Descuento aplicado y registrado a nombre de Marta.');
+    }
+  });
+}
+
+function imprimirCuenta(){
+  const c = cob.cuenta;
+  const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
+  const linea = (n,v) => `<div class="l"><span class="n">${n}</span><span>${v}</span></div>`;
+  document.getElementById('impresion').innerHTML = `
+    <h1>${LOCAL.nombre}</h1>
+    <div class="sub">${LOCAL.ciudad}<br>
+      Mesa ${nums.join(' + ')} · ${c.comensales} personas<br>
+      ${new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short',hour12:false})}</div>
+    <hr>
+    ${itemsCobrables(c).map(i =>
+      linea(i.cant + '  ' + prod(i.pid).nom, plata(i.cant*i.precio))).join('')}
+    <hr>
+    ${linea('Subtotal', plata(consumido(c)))}
+    ${c.descuento.monto ? linea('Descuento', '−' + plata(c.descuento.monto)) : ''}
+    ${propinas(c) ? linea('Propina', plata(propinas(c))) : ''}
+    <div class="l tot"><span class="n">TOTAL</span><span>${plata(aCobrar(c)+propinas(c))}</span></div>
+    <hr>
+    <div class="legal">Este comprobante no es factura<br>ni válido como comprobante fiscal.<br>Gracias por su visita.</div>`;
+  window.print();
+}
+
+function cerrarMesa(){
+  const c = cob.cuenta;
+  const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
+  c.mesas.forEach(id => MESAS.find(m => m.id === id).pendienteLimpieza = true);
+  CUENTAS = CUENTAS.filter(x => x !== c);
+  cob.cuenta = null;
+  document.getElementById('vistaCobro').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  pintar();
+  tostar('Mesa ' + nums.join(' y ') + ' cobrada. Queda a limpiar.');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Datos del local. Esto es lo único que hay que cambiar para
+   presentarle el sistema a otro restaurante.
+   ═══════════════════════════════════════════════════════════ */
+const LOCAL = {
+  nombre:'Comedor La Estación',
+  ciudad:'25 de Mayo, Buenos Aires',
+  /* Poné las fotos en una carpeta "fotos" al lado de este archivo,
+     con el nombre del plato: p1.jpg, p2.jpg, etc. Las que falten
+     muestran un fondo generado y no rompen nada. */
+  usarFotos:true,
+  carpetaFotos:'fotos/'
+};
+
+const TONOS = {
+  'Para picar':[28,62], 'Empanadas':[38,58], 'Parrilla':[8,50], 'Minutas':[20,55],
+  'Milanesas':[33,60], 'Pastas':[45,55], 'Guarniciones':[92,42], 'Postres':[330,45],
+  'Bebidas':[200,48], 'Cerveza y vino':[268,42], 'Cafetería':[24,40]
+};
+function fondoPlato(p){
+  const [h,s] = TONOS[p.rubro] || [210,40];
+  return `background:
+    radial-gradient(circle at 50% 54%, hsl(${h} ${s}% 40% / .85) 0 26%, transparent 27%),
+    linear-gradient(145deg, hsl(${h} ${s}% 31%), hsl(${(h+22)%360} ${s}% 20%))`;
+}
+function fotoHTML(p){
+  return `<span class="foto">
+    <span class="plato-ph" style="${fondoPlato(p)}"></span>
+    ${LOCAL.usarFotos ? `<img src="${LOCAL.carpetaFotos}${p.id}.jpg" alt="" loading="lazy" onerror="this.remove()">` : ''}
+  </span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Carta pública por QR (5.5)
+   ═══════════════════════════════════════════════════════════ */
+const tokenDe = numero => 'k' + ((numero*7919) % 9973).toString(36);
+const urlBase = () => location.href.split('?')[0].split('#')[0];
+const urlMesa = numero => urlBase() + '?m=' + numero + '&t=' + tokenDe(numero);
+
+const cli = { mesa:null, rubro:'todos', carrito:{}, vista:'carta', enviado:false };
+
+function abrirCliente(numero){
+  const m = MESAS.find(x => x.numero === numero);
+  if(!m) return false;
+  cli.mesa = m; cli.carrito = {}; cli.vista = 'carta'; cli.enviado = false;
+  document.getElementById('vistaSalon').hidden = true;
+  ['vistaPedido','vistaCocina','vistaCobro','vistaQR'].forEach(v => document.getElementById(v).hidden = true);
+  document.getElementById('vistaCliente').hidden = false;
+  document.getElementById('clNombre').textContent = LOCAL.nombre;
+  document.getElementById('clMesa').textContent = 'Mesa ' + m.numero + ' · ' + LOCAL.ciudad;
+  pintarCliente();
+  return true;
+}
+document.getElementById('clCambiar').onclick = () => {
+  cli.vista = cli.vista === 'carta' ? 'mesa' : 'carta';
+  document.getElementById('clCambiar').textContent = cli.vista === 'carta' ? 'Mi mesa' : 'Ver la carta';
+  pintarCliente();
+};
+
+function pintarCliente(){
+  const cuerpo = document.getElementById('clCuerpo');
+  const rubros = document.getElementById('clRubros');
+  const barra = document.getElementById('clBarra');
+
+  if(cli.vista === 'mesa'){
+    rubros.style.display = 'none';
+    const c = cuentaDe(cli.mesa.id);
+    const items = c ? itemsDe(c) : [];
+    let html = '';
+    if(cli.enviado) html += `<div class="cl-ok">Tu pedido llegó a la caja. Lo confirman en un momento.</div>`;
+    if(!items.length){
+      html += `<div class="nada"><p>Todavía no hay nada cargado en esta mesa.</p>
+        <small>Lo que pidas aparece acá cuando lo confirman.</small></div>`;
+    } else {
+      html += `<div class="cb-tit">Lo que lleva la mesa</div>`;
+      items.forEach(i => {
+        html += `<div class="cb-fila"><span class="c num">${i.cant}</span>
+          <span class="t"><b>${prod(i.pid).nom}</b>${i.acl?`<span class="acl">${i.acl}</span>`:''}</span>
+          <span class="p">${plata(i.cant*i.precio)}</span></div>`;
+      });
+      html += `<div class="cb-cuentas" style="margin-top:16px">
+        <div class="fuerte"><span>Total hasta ahora</span><span class="num">${plata(totalDe(c))}</span></div></div>`;
+    }
+    html += `<div class="botonera" style="margin-top:20px">
+      <button class="btn" id="clMozo">Llamar al mozo</button>
+      <button class="btn" id="clCuenta" ${c&&c.cuentaPedida?'disabled':''}>
+        ${c&&c.cuentaPedida?'Cuenta pedida':'Pedir la cuenta'}</button>
+    </div>`;
+    cuerpo.innerHTML = html;
+    barra.innerHTML = `<span>Precios con IVA. Este resumen no es factura.</span>`;
+    document.getElementById('clMozo').onclick = () => tostar('Listo, avisamos al mozo. Ya viene.');
+    const bc = document.getElementById('clCuenta');
+    if(bc && !bc.disabled) bc.onclick = () => {
+      const cc = cuentaDe(cli.mesa.id);
+      if(!cc){ tostar('Todavía no hay nada para cobrar.'); return; }
+      cc.cuentaPedida = Date.now(); pintarCliente();
+      tostar('Pedimos la cuenta. El mozo se acerca.');
+    };
+    return;
+  }
+
+  rubros.style.display = '';
+  rubros.innerHTML = `<button class="chip" data-r="todos" aria-pressed="${cli.rubro==='todos'}">Todo</button>` +
+    RUBROS.map(r => `<button class="chip" data-r="${r}" aria-pressed="${cli.rubro===r}">${r}</button>`).join('');
+  rubros.querySelectorAll('.chip').forEach(b =>
+    b.onclick = () => { cli.rubro = b.dataset.r; pintarCliente(); document.getElementById('clCuerpo').scrollTop = 0; });
+
+  const lista = CARTA.filter(p => cli.rubro === 'todos' || p.rubro === cli.rubro);
+  let html = '';
+  let ultimo = '';
+  lista.forEach(p => {
+    if(cli.rubro === 'todos' && p.rubro !== ultimo){ html += `<div class="cb-tit arriba">${p.rubro}</div>`; ultimo = p.rubro; }
+    const n = cli.carrito[p.id] || 0;
+    html += `<${p.agotado?'div':'button'} class="cl-plato ${p.agotado?'agotado':''}" ${p.agotado?'':`data-add="${p.id}"`}>
+      ${fotoHTML(p)}
+      <span class="info"><b>${p.nom}</b>
+        <span class="r">${DESTINOS[p.destino]}</span>
+        <span class="pr">${plata(p.precio)}</span>
+        ${p.agotado?'<span class="nostock">Hoy no hay</span>':''}</span>
+      ${p.agotado?'':`<span class="mas ${n?'tiene':''}">${n||'+'}</span>`}
+    </${p.agotado?'div':'button'}>`;
+  });
+  cuerpo.innerHTML = html;
+  cuerpo.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
+    const id = b.dataset.add;
+    cli.carrito[id] = (cli.carrito[id]||0) + 1;
+    pintarCliente();
+  });
+
+  const cant = Object.values(cli.carrito).reduce((s,v) => s+v, 0);
+  const tot = Object.keys(cli.carrito).reduce((s,id) => s + cli.carrito[id]*prod(id).precio, 0);
+  barra.innerHTML = cant
+    ? `<span>${cant} ítem${cant>1?'s':''}</span><span class="plata num">${plata(tot)}</span>
+       <button class="btn" id="clVaciar">Vaciar</button>
+       <button class="btn lleno" id="clEnviar">Pedir</button>`
+    : `<span>Tocá un plato para armar tu pedido</span>`;
+  if(cant){
+    document.getElementById('clVaciar').onclick = () => { cli.carrito = {}; pintarCliente(); };
+    document.getElementById('clEnviar').onclick = enviarPedidoCliente;
+  }
+}
+
+function enviarPedidoCliente(){
+  const m = cli.mesa;
+  let c = cuentaDe(m.id);
+  if(!c){
+    c = { id:nuevoId(), mesas:[m.id], comensales:m.capacidad, mozo:'Nico',
+          abierta:Date.now(), cuentaPedida:null, comandas:[] };
+    CUENTAS.push(c);
+    m.pendienteLimpieza = false;
+  }
+  const ronda = Math.max(0, ...c.comandas.map(k => k.ronda)) + 1;
+  const porDestino = {};
+  Object.keys(cli.carrito).forEach(id => {
+    const p = prod(id);
+    (porDestino[p.destino] = porDestino[p.destino] || []).push({
+      id:nuevoId(), pid:id, cant:cli.carrito[id], precio:p.precio, acl:'', estado:'pendiente'
+    });
+  });
+  Object.keys(porDestino).forEach(d => {
+    c.comandas.push({ id:nuevoId(), destino:d, ronda, estado:'pendiente_aprobacion',
+      origen:'qr', creada:Date.now(), enviada:null, items:porDestino[d] });
+  });
+  cli.carrito = {}; cli.enviado = true; cli.vista = 'mesa';
+  document.getElementById('clCambiar').textContent = 'Ver la carta';
+  pintarCliente();
+  tostar('Pedido enviado. Espera la confirmación de la caja.');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Hoja de códigos QR
+   ═══════════════════════════════════════════════════════════ */
+function abrirQR(){
+  document.getElementById('vistaSalon').hidden = true;
+  document.getElementById('vistaQR').hidden = false;
+  const local = location.protocol === 'file:';
+  document.getElementById('qrAclara').innerHTML = local
+    ? `<b>Estos códigos todavía no se pueden escanear.</b> Apuntan a un archivo de tu computadora,
+       y el celular no tiene cómo llegar ahí. Subí el archivo a una dirección de internet
+       y volvé a entrar acá: los códigos se regeneran solos apuntando a donde esté publicado.`
+    : `Imprimí esta hoja, recortá y pegá un código en cada mesa. Si alguien empieza a pedir
+       desde afuera del local, se cambia el código de esa mesa y el viejo deja de servir.`;
+  document.getElementById('qrGrilla').innerHTML = MESAS.map(m => `
+    <div class="qr-carta">
+      <div class="lugar">${LOCAL.nombre}</div>
+      <div class="n">Mesa ${m.numero}</div>
+      ${QR.svg(urlMesa(m.numero), '100%')}
+      <div class="pie">Escaneá para ver la carta<br>y pedir desde tu mesa</div>
+    </div>`).join('');
+}
+document.getElementById('btnVolverDeQR').onclick = () => {
+  document.getElementById('vistaQR').hidden = true;
+  document.getElementById('vistaSalon').hidden = false;
+  pintar();
+};
+document.getElementById('btnImprimirQR').onclick = () => window.print();
+
+/* ── Modal genérico ─────────────────────────────────────── */
+let elegidoModal = null;
+function abrirModal(cfg){
+  elegidoModal = null;
+  const caja = document.getElementById('cajaModal');
+  caja.innerHTML = `<h3>${cfg.titulo}</h3><p>${cfg.texto}</p>
+    <div class="opciones" id="ops">${cfg.opciones.map(o => `<button data-op="${o}">${o}</button>`).join('')}</div>
+    <div id="libre" style="display:none"><input type="text" id="txtLibre" placeholder="Escribí el motivo"></div>
+    ${cfg.pin ? `<label for="pin">PIN de cajero</label><input type="text" id="pin" class="pin" inputmode="numeric" maxlength="4" placeholder="••••" value="1234">` : ''}
+    <div class="botonera">
+      <button class="btn" id="mCancelar">Cancelar</button>
+      <button class="btn ${cfg.peligro?'mal':'lleno'}" id="mOk" disabled>${cfg.boton}</button>
+    </div>`;
+  document.getElementById('modal').classList.add('abierto');
+
+  const ok = document.getElementById('mOk');
+  caja.querySelectorAll('#ops button').forEach(b => b.onclick = () => {
+    caja.querySelectorAll('#ops button').forEach(x => x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    elegidoModal = b.dataset.op;
+    document.getElementById('libre').style.display = elegidoModal === 'Otro' ? 'block' : 'none';
+    ok.disabled = false;
+  });
+  document.getElementById('mCancelar').onclick = cerrarModal;
+  ok.onclick = () => {
+    let v = elegidoModal;
+    if(v === 'Otro'){
+      const t = document.getElementById('txtLibre').value.trim();
+      if(!t){ tostar('Escribí el motivo.'); return; }
+      v = t;
+    }
+    cerrarModal();
+    cfg.alConfirmar(v);
+  };
+}
+function cerrarModal(){ document.getElementById('modal').classList.remove('abierto'); }
+
+/* ── Aviso flotante ───────────────────────────────────────── */
+let relojTostada;
+function tostar(txt){
+  const t = document.getElementById('tostada');
+  t.textContent = txt;
+  t.classList.add('visible');
+  clearTimeout(relojTostada);
+  relojTostada = setTimeout(() => t.classList.remove('visible'), 3600);
+}
+
+/* ── Red simulada ─────────────────────────────────────────── */
+document.getElementById('btnRed').onclick = () => {
+  ui.enLinea = !ui.enLinea;
+  const b = document.getElementById('btnRed');
+  b.classList.toggle('off', !ui.enLinea);
+  document.getElementById('txtRed').textContent = ui.enLinea ? 'En línea' : 'Sin internet';
+  if(ui.enLinea && ui.enCola){
+    tostar('Volvió internet. Se sincronizaron ' + ui.enCola + ' comandas.');
+    ui.enCola = 0;
+  }
+  pintar();
+};
+
+/* ── Reloj y tiempos ──────────────────────────────────────── */
+function tick(){
+  const h = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  document.getElementById('reloj').textContent = h;
+  document.getElementById('relojCocina').textContent = h;
+  document.getElementById('relojCobro').textContent = h;
+}
+setInterval(() => {
+  if(!document.getElementById('vistaCocina').hidden) pintarCocina();
+  else contadorCocina();
+}, 15000);
+tick();
+setInterval(tick, 20000);
+setInterval(() => { if(ui.modo === 'normal') pintar(); }, 30000);
+
+/* ── Vida propia: entra un pedido por QR ──────────────────── */
+setTimeout(() => {
+  if(!ui.enLinea) return;
+  const c = CUENTAS.find(x => x.id === 'c4');
+  c.comandas.push({
+    id:nuevoId(), destino:'coc', ronda:2, estado:'pendiente_aprobacion',
+    origen:'qr', creada:Date.now(), enviada:null,
+    items:[
+      { id:nuevoId(), pid:'p10', cant:2, precio:650000, acl:'', estado:'pendiente' },
+      { id:nuevoId(), pid:'p12', cant:1, precio:820000, acl:'bien crocantes', estado:'pendiente' }
+    ]
+  });
+  pintar();
+  tostar('Entró un pedido por QR de la mesa 7.');
+}, 9000);
+
+/* ── Arranque ─────────────────────────────────────────────
+   Si la dirección trae ?m=NUMERO&t=TOKEN, esto es el celular
+   de un cliente que escaneó el QR de esa mesa. */
+(function arrancar(){
+  document.getElementById('nombreLocal').textContent = LOCAL.nombre;
+  document.getElementById('nombreLocal2').textContent = LOCAL.nombre;
+  document.title = LOCAL.nombre;
+
+  const q = new URLSearchParams(location.search);
+  const num = Number(q.get('m')), tok = q.get('t');
+  if(num && tok){
+    const m = MESAS.find(x => x.numero === num);
+    if(m && tok === tokenDe(num)){ pintar(); abrirCliente(num); return; }
+    document.body.innerHTML = `<div class="nada" style="padding-top:80px">
+      <p>Este código no es válido.</p>
+      <small>Puede que hayan cambiado el código de la mesa. Pedile la carta al mozo.</small></div>`;
+    return;
+  }
+  pintar();
+})();
+</script>
+</body>
+</html>
