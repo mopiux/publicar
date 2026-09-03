@@ -807,6 +807,21 @@ input::placeholder{color:var(--texto-tenue)}
 .dn-campo label{display:block;font-size:15px;color:var(--texto-medio);margin-bottom:6px}
 .dn-campo input{margin:0;width:100%}
 
+.dn-doble{display:flex;gap:26px;align-items:flex-start}
+.dn-col{flex:1;min-width:0}
+.dn-previa{flex:0 0 auto;position:sticky;top:0}
+.dn-previa .et{font-size:15px;color:var(--texto-tenue);margin-bottom:9px;display:block}
+.marco{
+  width:330px;height:640px;position:relative;overflow:hidden;
+  border:11px solid #0E1216;border-radius:34px;background:#000;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.marco .cliente{position:absolute;inset:0;height:100%;max-width:none;margin:0}
+.marco .cl-barra{position:absolute;max-width:none;padding-bottom:13px}
+.marco .cl-cuerpo{padding-bottom:86px}
+@media (max-width:1180px){
+  .dn-previa{display:none}
+}
 .dn-opciones{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:6px}
 .dn-opciones button{
   min-height:48px;padding:0 18px;border:1px solid var(--borde);border-radius:9px;
@@ -923,6 +938,7 @@ input::placeholder{color:var(--texto-tenue)}
       <h1 id="clNombre">Comedor La Estación</h1>
       <div class="mesa-et" id="clMesa">Mesa 7</div>
     </div>
+    <button class="btn" id="clVolver" hidden>Salir</button>
     <button class="btn" id="clCambiar">Mi mesa</button>
   </header>
   <nav class="cl-rubros" id="clRubros"></nav>
@@ -1649,9 +1665,11 @@ function pintarAcciones(){
   cont.innerHTML = `<span class="texto">${ocupadas} mesas trabajando · ${libres} libres · Turno abierto 19:30</span>
     <button class="btn" id="btnReiniciar">Reiniciar demo</button>
     <button class="btn" id="btnQR">Códigos QR</button>
+    <button class="btn" id="btnVerCarta">Ver la carta</button>
     <button class="btn" id="btnJuntar">Juntar mesas</button>
     <button class="btn" id="btnMover">Mover mesa</button>`;
   document.getElementById('btnQR').onclick = abrirQR;
+  document.getElementById('btnVerCarta').onclick = () => abrirCliente(MESAS[0].numero);
   document.getElementById('btnReiniciar').onclick = () => { location.href = urlBase(); };
   document.getElementById('btnJuntar').onclick = () => { ui.modo='juntar'; ui.elegidas=[]; pintar(); };
   document.getElementById('btnMover').onclick = () => {
@@ -1661,6 +1679,16 @@ function pintarAcciones(){
 }
 
 function pintar(){ pintarAvisos(); pintarFiltros(); pintarPiso(); pintarAcciones(); contadorCocina(); if(ui.mesaAbierta) pintarPanel(); }
+
+/* ── Navegación ───────────────────────────────────────────
+   Una sola función esconde todo y muestra una pantalla. Cada
+   vez que alguien escondía pantallas a mano se olvidaba una. */
+const VISTAS = ['vistaSalon','vistaPedido','vistaCocina','vistaCobro','vistaCliente','vistaQR','vistaDueno'];
+function mostrar(id){
+  devolverPrevia();
+  VISTAS.forEach(v => document.getElementById(v).hidden = (v !== id));
+  window.scrollTo(0,0);
+}
 
 /* ── Toques sobre la grilla ───────────────────────────────── */
 function tocarMesa(id){
@@ -1975,8 +2003,7 @@ function abrirPedido(mesaId){
   ped.cuenta = c; ped.rubro = 'todos'; ped.busca = '';
   document.getElementById('buscador').value = '';
   cerrarPanel();
-  document.getElementById('vistaSalon').hidden = true;
-  document.getElementById('vistaPedido').hidden = false;
+  mostrar('vistaPedido');
   const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
   document.getElementById('pedTitulo').textContent = 'Mesa ' + nums.join(' + ');
   document.getElementById('pedSub').textContent = c.comensales + ' personas · atiende ' + c.mozo;
@@ -1985,8 +2012,7 @@ function abrirPedido(mesaId){
 }
 
 function volverAlSalon(){
-  document.getElementById('vistaPedido').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   document.getElementById('ticket').classList.remove('abierto');
   ped.cuenta = null;
   pintar();
@@ -2218,16 +2244,13 @@ function comandasDeCocina(){
 }
 
 function irACocina(){
-  document.getElementById('vistaSalon').hidden = true;
-  document.getElementById('vistaPedido').hidden = true;
-  document.getElementById('vistaCocina').hidden = false;
+  mostrar('vistaCocina');
   pintarCocina();
 }
 document.getElementById('btnCocina').onclick = irACocina;
 document.getElementById('btnDueno').onclick = abrirDueno;
 document.getElementById('btnVolverDeCocina').onclick = () => {
-  document.getElementById('vistaCocina').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   pintar();
 };
 
@@ -2357,16 +2380,14 @@ function abrirCobro(mesaId){
   cob.cuenta = c; cob.modo = 'junto'; cob.activa = 0;
   armarPartes();
   cerrarPanel();
-  document.getElementById('vistaSalon').hidden = true;
-  document.getElementById('vistaCobro').hidden = false;
+  mostrar('vistaCobro');
   const nums = c.mesas.map(id => MESAS.find(m => m.id === id).numero);
   document.getElementById('cbTitulo').textContent = 'Cobrar mesa ' + nums.join(' + ');
   document.getElementById('cbSub').textContent = c.comensales + ' personas · abierta hace ' + transcurrido(c.abierta);
   pintarCobro();
 }
 document.getElementById('btnVolverDeCobro').onclick = () => {
-  document.getElementById('vistaCobro').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   cob.cuenta = null;
   pintar();
 };
@@ -2642,8 +2663,7 @@ function cerrarMesa(){
   CERRADAS.push(c);
   CUENTAS = CUENTAS.filter(x => x !== c);
   cob.cuenta = null;
-  document.getElementById('vistaCobro').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   pintar();
   tostar('Mesa ' + nums.join(' y ') + ' cobrada. Queda a limpiar.');
 }
@@ -2689,15 +2709,15 @@ const tokenDe = numero => 'k' + ((numero*7919) % 9973).toString(36);
 const urlBase = () => location.href.split('?')[0].split('#')[0];
 const urlMesa = numero => urlBase() + '?m=' + numero + '&t=' + tokenDe(numero);
 
-const cli = { mesa:null, rubro:'todos', carrito:{}, vista:'carta', enviado:false };
+const cli = { mesa:null, rubro:'todos', carrito:{}, vista:'carta', enviado:false, desdeQR:false };
+document.getElementById('clVolver').onclick = () => mostrar('vistaSalon');
 
 function abrirCliente(numero){
   const m = MESAS.find(x => x.numero === numero);
   if(!m) return false;
   cli.mesa = m; cli.carrito = {}; cli.vista = 'carta'; cli.enviado = false;
-  document.getElementById('vistaSalon').hidden = true;
-  ['vistaPedido','vistaCocina','vistaCobro','vistaQR'].forEach(v => document.getElementById(v).hidden = true);
-  document.getElementById('vistaCliente').hidden = false;
+  document.getElementById('clVolver').hidden = cli.desdeQR || enPrevia;
+  if(!enPrevia) mostrar('vistaCliente');
   const h1 = document.getElementById('clNombre');
   h1.innerHTML = APARIENCIA.logo
     ? `<img class="logo" src="${LOCAL.carpetaFotos}logo.png" alt="${LOCAL.nombre}"
@@ -2836,8 +2856,7 @@ function enviarPedidoCliente(){
    Hoja de códigos QR
    ═══════════════════════════════════════════════════════════ */
 function abrirQR(){
-  document.getElementById('vistaSalon').hidden = true;
-  document.getElementById('vistaQR').hidden = false;
+  mostrar('vistaQR');
   const local = location.protocol === 'file:';
   document.getElementById('qrAclara').innerHTML = local
     ? `<b>Estos códigos todavía no se pueden escanear.</b> Apuntan a un archivo de tu computadora,
@@ -2854,8 +2873,7 @@ function abrirQR(){
     </div>`).join('');
 }
 document.getElementById('btnVolverDeQR').onclick = () => {
-  document.getElementById('vistaQR').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   pintar();
 };
 document.getElementById('btnImprimirQR').onclick = () => window.print();
@@ -2866,16 +2884,12 @@ document.getElementById('btnImprimirQR').onclick = () => window.print();
 const dn = { solapa:'caja', busca:'', rubro:'todos' };
 
 function abrirDueno(){
-  ['vistaPedido','vistaCocina','vistaCobro','vistaQR','vistaCliente'].forEach(v =>
-    document.getElementById(v).hidden = true);
-  document.getElementById('vistaSalon').hidden = true;
-  document.getElementById('vistaDueno').hidden = false;
+  mostrar('vistaDueno');
   document.getElementById('dnLocal').textContent = LOCAL.nombre;
   pintarDueno();
 }
 document.getElementById('btnVolverDeDueno').onclick = () => {
-  document.getElementById('vistaDueno').hidden = true;
-  document.getElementById('vistaSalon').hidden = false;
+  mostrar('vistaSalon');
   pintar();
 };
 
@@ -2886,6 +2900,7 @@ function pintarDueno(){
   document.getElementById('dnSolapas').querySelectorAll('.chip').forEach(b =>
     b.onclick = () => { dn.solapa = b.dataset.s; pintarDueno(); });
 
+  if(dn.solapa !== 'apariencia') devolverPrevia();
   if(dn.solapa === 'caja') pintarDnCaja();
   else if(dn.solapa === 'carta') pintarDnCarta();
   else if(dn.solapa === 'apariencia') pintarDnApariencia();
@@ -3325,12 +3340,30 @@ function aplicarApariencia(){
   el.classList.toggle('rubro-linea', APARIENCIA.rubro === 'linea');
 }
 
+let enPrevia = false;
+function devolverPrevia(){
+  if(!enPrevia) return;
+  enPrevia = false;
+  const el = document.getElementById('vistaCliente');
+  el.hidden = true;
+  document.body.appendChild(el);
+}
+function ponerPrevia(){
+  const marco = document.getElementById('marcoPrevia');
+  if(!marco) return;
+  const el = document.getElementById('vistaCliente');
+  enPrevia = true;
+  marco.appendChild(el);
+  el.hidden = false;
+  abrirCliente(MESAS[0].numero);
+}
+
 function pintarDnApariencia(){
   document.getElementById('dnBarra').innerHTML = `
     <span style="color:var(--texto-medio);font-size:16px">Los cambios se ven al instante en el celular del cliente.</span>
     <div class="sep"></div>
     <button class="btn lleno" id="dnVerCarta">Ver la carta</button>`;
-  document.getElementById('dnVerCarta').onclick = () => abrirCliente(MESAS[0].numero);
+  document.getElementById('dnVerCarta').onclick = () => { devolverPrevia(); abrirCliente(MESAS[0].numero); };
 
   const grupo = (tit, clave, ops, extra) => `<div class="dn-rubro">${tit}</div>
     <div class="dn-opciones">${ops.map(([v,et]) =>
@@ -3338,6 +3371,7 @@ function pintarDnApariencia(){
     </div>${extra||''}`;
 
   document.getElementById('dnCuerpo').innerHTML = `
+   <div class="dn-doble"><div class="dn-col">
     <p class="dn-nota">El sistema se adapta a la identidad del local, pero no todo se mueve.
     El botón de pedir queda fijo abajo a propósito: es donde llega el pulgar sin acomodar la mano,
     y correrlo hace que la gente pida menos.</p>
@@ -3354,12 +3388,19 @@ function pintarDnApariencia(){
     ${grupo('Títulos de rubro','rubro',[['pastilla','Pastilla'],['linea','Línea simple']])}
     ${grupo('Encabezado','logo',[[false,'Nombre escrito'],[true,'Logo del local']],
       `<p class="dn-nota" style="margin-top:8px">Para usar el logo, poné el archivo
-       <b>logo.png</b> dentro de la carpeta <b>fotos</b>. Si no está, se muestra el nombre.</p>`)}`;
+       <b>logo.png</b> dentro de la carpeta <b>fotos</b>. Si no está, se muestra el nombre.</p>`)}
+   </div>
+   <div class="dn-previa">
+     <span class="et">Así lo ve el cliente en su celular</span>
+     <div class="marco" id="marcoPrevia"></div>
+   </div></div>`;
+  ponerPrevia();
 
   document.getElementById('dnCuerpo').querySelectorAll('[data-set]').forEach(b => b.onclick = () => {
     const v = b.dataset.val;
     APARIENCIA[b.dataset.set] = v === 'true' ? true : v === 'false' ? false : v;
     aplicarApariencia();
+    devolverPrevia();
     pintarDnApariencia();
   });
 }
@@ -3469,7 +3510,7 @@ setTimeout(() => {
   const num = Number(q.get('m')), tok = q.get('t');
   if(num && tok){
     const m = MESAS.find(x => x.numero === num);
-    if(m && tok === tokenDe(num)){ pintar(); abrirCliente(num); return; }
+    if(m && tok === tokenDe(num)){ cli.desdeQR = true; pintar(); abrirCliente(num); return; }
     document.body.innerHTML = `<div class="nada" style="padding-top:80px">
       <p>Este código no es válido.</p>
       <small>Puede que hayan cambiado el código de la mesa. Pedile la carta al mozo.</small></div>`;
