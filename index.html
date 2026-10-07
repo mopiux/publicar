@@ -1,4 +1,14 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Evitar que el navegador guarde una copia vieja de la página -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- Cambiá este número cada vez que subas una versión nueva a git -->
+<meta name="app-version" content="2026-10-07.1">
 <title>Nomenclab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -275,6 +285,14 @@ footer{margin-top:40px;color:var(--muted);font-size:.85rem;max-width:70ch}
   .mcard:not(.open):not(.done) .face.front{display:none}
 }
 </style>
+<style>
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
 
 <div class="app">
   <header class="top">
@@ -938,4 +956,24 @@ const h=(location.hash||'').slice(1);
 showTab(TABS[h]?h:(TABS[store.get('tab','lab')]?store.get('tab','lab'):'lab'));
 </script>
 
-</body></html>
+<script>
+/* Si hay una versión más nueva publicada, recarga la página salteando la caché */
+(function(){
+  var meta=document.querySelector('meta[name="app-version"]');
+  if(!meta||!window.fetch)return;
+  var actual=meta.content;
+  fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'})
+    .then(function(r){return r.ok?r.text():''})
+    .then(function(t){
+      var m=t.match(/name="app-version" content="([^"]+)"/);
+      if(!m||m[1]===actual)return;
+      var u=new URL(location.href);
+      if(u.searchParams.get('v')===m[1])return;
+      u.searchParams.set('v',m[1]);
+      location.replace(u.toString());
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
+</html>
