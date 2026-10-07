@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- Cambiá este número cada vez que subas una versión nueva a git -->
-<meta name="app-version" content="2026-10-07.1">
+<meta name="app-version" content="2026-10-07.2">
 <title>Nomenclab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,6 +170,41 @@ sub{font-size:.62em;vertical-align:-.28em;line-height:0}
 .nrow .why{font-size:.87rem;color:var(--muted);margin-top:2px}
 .nrow .why b{color:var(--ink)}
 
+/* LAB: modo práctica */
+input{font:inherit;color:inherit}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface-2);border:1.5px solid var(--line);border-radius:999px;padding:3px}
+.modes button{border:0;background:none;border-radius:999px;padding:8px 10px;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:.95rem}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.pr{display:grid;gap:12px}
+.pr-intro{margin:0;font-size:.92rem;color:var(--muted)}
+.pr-intro b{color:var(--ink)}
+.pstep{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface-2);display:grid;gap:8px;min-width:0}
+.ps-h{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:.98rem}
+.ps-n{width:24px;height:24px;border-radius:7px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:.8rem;flex:none}
+.ps-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ps-names{display:grid;gap:8px}
+.pf{display:grid;gap:4px;min-width:0}
+.pf>span{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--c,var(--muted))}
+.pf.tr{--c:var(--n-tr)} .pf.st{--c:var(--n-st)} .pf.si{--c:var(--n-si)}
+.pf input,.xsub{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-size:16px}
+.pf input[readonly]{background:var(--surface-2);font-weight:700}
+.pf input:focus,.xsub:focus{border-color:var(--accent);outline:none}
+.pf.na input{border-style:dashed;color:var(--muted)}
+.pf.ok input,.xrow.ok .xsub{border-color:var(--good);background:var(--good-soft)}
+.pf.bad input,.xrow.bad .xsub{border-color:var(--bad);background:var(--bad-soft)}
+.pmsg{font-size:.85rem;color:var(--muted)}
+.pf.ok .pmsg,.pmsg.ok{color:var(--good)}
+.pf.bad .pmsg,.pmsg.bad{color:var(--bad)}
+.pmsg b{color:var(--ink)}
+.xrow{display:flex;align-items:flex-end;flex-wrap:wrap;gap:4px;font-family:var(--f-display);font-weight:800;font-size:2.2rem;line-height:1}
+.xsub{width:54px;padding:4px 6px;font-size:1.15rem;text-align:center;font-family:var(--f-display);font-weight:700;margin-right:12px;transform:translateY(8px)}
+.pprev{font-size:.88rem;color:var(--muted)}
+.pprev b{font-family:var(--f-display);font-size:1.25rem;color:var(--ink)}
+.pr-res{border-radius:12px;padding:10px 14px;font-weight:700}
+.pr-res.ok{background:var(--good-soft);color:var(--good)}
+.pr-res.part{background:var(--surface-2);border:1px solid var(--line)}
+.pr-actions{display:flex;flex-wrap:wrap;gap:8px}
+
 /* MEMOTEST */
 .memo-wrap{max-width:600px;margin:0 auto}
 .bar-ctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:14px}
@@ -316,7 +351,7 @@ img{max-width:100%}
   <section id="tab-lab" role="tabpanel" aria-labelledby="t-lab">
     <div class="sec-intro">
       <h2>Elegí un elemento y combinalo</h2>
-      <p>Mirá cómo se cruzan los números de oxidación para armar la fórmula y por qué se llama como se llama en cada nomenclatura.</p>
+      <p>Elegí el elemento, su número de oxidación y con qué se combina. Resolvelo vos paso a paso y comprobá, o mirá la solución explicada.</p>
     </div>
     <div class="lab">
       <div class="picker" id="picker">
@@ -607,6 +642,115 @@ function whySi(c){
 }
 const WHY={tr:whyTr,st:whySt,si:whySi};
 
+/* ---------- corrección de respuestas escritas ---------- */
+const del=e=>e.art==='la'?'de la':'del';
+const strip=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'');
+const compact=s=>strip(String(s).toLowerCase()).replace(/[^a-z0-9]/g,'');
+const accentKey=s=>String(s).toLowerCase().normalize('NFC').replace(/[^a-záéíóúüñ0-9]/g,'');
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function alts(c,nom){
+  const e=c.e,t=TIPO[c.tipo],base=c.names[nom],A=[{s:base}];
+  if(!base)return A;
+  if(nom==='tr'){
+    if(e.sym==='I'&&c.v===7)A.push({s:base.replace('peryódico','periódico')});
+    if(e.sym==='Sn'&&c.v===4)A.push({s:base.replace('estánnico','estánico')});
+    if(c.nmh){
+      if(e.sym==='N')A.push({s:'amoniaco'});if(e.sym==='P')A.push({s:'fosfano'});if(e.sym==='As')A.push({s:'arsano'});
+      if(!c.special)A.push({s:c.names.si.replace(' de dihidrógeno',' de hidrógeno'),note:`Así se lo llama como gas. Disuelto en agua (la forma tradicional) es «${base}».`});
+    }
+  }
+  if(nom==='st'&&!c.nmh&&e.ox.length===1)A.push({s:`${t} de ${e.n} (${ROM[c.v]})`,note:`Está bien, aunque como ${e.art} ${e.n} tiene un solo número, el (${ROM[c.v]}) no hace falta.`});
+  if(nom==='si'){
+    if(c.tipo==='oxido'){
+      const L={4:'tetraóxido',5:'pentaóxido',6:'hexaóxido',7:'heptaóxido'};
+      if(L[c.b])A.push({s:base.replace(OXW[c.b],L[c.b])});
+      if(c.b===1&&c.a>1)A.push({s:base.replace('monóxido','óxido')});
+    } else if(!c.nmh&&c.v===1)A.push({s:'mono'+base});
+    if(c.nmh&&!c.special&&c.h===2)A.push({s:base.replace('dihidrógeno','hidrógeno')});
+  }
+  return A;
+}
+const looksFormula=s=>{const t=s.trim();return t.length>0&&!/\s/.test(t)&&/[0-9₀-₉()]/.test(t)&&t.length<14};
+function checkName(c,nom,input){
+  const u=compact(input);if(!u)return {invalid:true};
+  for(const a of alts(c,nom))if(compact(a.s)===u){
+    const notes=[];
+    if(a.note)notes.push(a.note);
+    else if(accentKey(input)!==accentKey(a.s))notes.push(`Ojo con las tildes: se escribe «${a.s}».`);
+    if(nom==='st'&&/\s[ivx]+\s*$/i.test(input.trim()))notes.push('Acordate de poner el número romano entre paréntesis.');
+    return {ok:true,notes};
+  }
+  return {ok:false,diag:diagName(c,nom,input,u)};
+}
+function diagName(c,nom,input,u){
+  const e=c.e,t=TIPO[c.tipo];
+  if(looksFormula(input))return 'Acá va el nombre, no la fórmula.';
+  for(const o of ['tr','st','si'])if(o!==nom&&c.names[o]&&alts(c,o).some(a=>compact(a.s)===u))
+    return `Ese nombre está bien, pero es de la nomenclatura ${NOM[o]}.`;
+  for(const x of COMPOUNDS){if(x===c)continue;
+    for(const o of ['tr','st','si'])if(x.names[o]&&alts(x,o).some(a=>compact(a.s)===u)){
+      if(x.e===c.e&&x.tipo===c.tipo)return `Ese es el nombre con ${fmtOx(x.v)}. Acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`;
+      if(x.e===c.e)return `Ese nombre es de un ${TIPO[x.tipo]}. Esto es un <b>${t}</b>.`;
+      return `Ese nombre es de otro elemento: ${x.e.n}.`;
+    }}
+  for(const tt of Object.keys(TIPO))if(tt!==c.tipo){
+    const w=compact(TIPO[tt]);
+    if(u.startsWith(w)&&!(tt==='oxido'&&u.startsWith('hidroxido'))){
+      const fixed=compact(t)+u.slice(w.length);
+      if(alts(c,nom).some(a=>compact(a.s)===fixed))return `El resto está bien, pero no es un ${TIPO[tt]}: es un <b>${t}</b>.`;
+    }
+  }
+  if(nom==='st'){
+    const m=input.match(/\d+/);
+    if(m){const n=+m[0];return `En Stock el número va en romanos: (${ROM[n]||'?'}).${n!==c.v?` Y acá actúa con +${c.v}.`:''}`}
+    if(e.ox.length>1&&u===compact(`${t} de ${e.n}`))return `Falta el número de oxidación en romanos: ${e.art} ${e.n} tiene más de uno.`;
+    const r=input.toLowerCase().match(/\(?\s*([ivx]+)\s*\)?\s*$/);
+    if(r){const val=ROM.indexOf(r[1].toUpperCase());if(val>0&&val!==c.v)return `El romano no es ese: actúa con +${c.v} → (${ROM[c.v]}).`}
+  }
+  if(nom==='tr'&&!c.nmh){
+    if(e.ox.length>1&&u===compact(`${t} de ${e.n}`))return `Como ${e.art} ${e.n} tiene más de un número, no se dice «de ${e.n}»: se usan las terminaciones.`;
+    if(e.ox.length===1&&/(oso|ico)$/.test(u))return `${cap(e.art)} ${e.n} tiene un solo número, así que no lleva -oso ni -ico.`;
+  }
+  if(nom==='si')return 'Revisá los prefijos: contá cuántos átomos de cada uno hay en la fórmula.';
+  return '';
+}
+const subNorm=s=>s.replace(/[₀-₉]/g,d=>'₀₁₂₃₄₅₆₇₈₉'.indexOf(d)).replace(/\s+/g,'');
+function checkFormula(c,input){
+  if(!input.trim())return {invalid:true};
+  if(/\s/.test(input.trim())&&!/\d/.test(input))return {ok:false,diag:'Acá va la fórmula, no el nombre.'};
+  const raw=subNorm(input).replace(/([A-Za-z)])1(?!\d)/g,'$1'),key=fKey(c.parts),had1=raw!==subNorm(input);
+  if(raw===key)return {ok:true,notes:had1?['El subíndice 1 no se escribe.']:[]};
+  if(raw.toLowerCase()===key.toLowerCase())return {ok:true,notes:[`Ojo con mayúsculas y minúsculas: ${fHTML(c.parts)}.`]};
+  return {ok:false,diag:diagFormula(c,raw.toLowerCase())};
+}
+function diagFormula(c,L){
+  const e=c.e,V=[],add=(p,m)=>V.push([fKey(p).toLowerCase(),m]);
+  if(c.tipo==='oxido'){
+    if(c.a!==c.b)add([{s:e.sym,n:c.b},{s:'O',n:c.a}],'Invertiste los subíndices: el número de cada uno baja como subíndice <b>del otro</b>.');
+    if(c.g>1)add([{s:e.sym,n:2},{s:'O',n:c.v}],`Cruzaste bien, pero falta simplificar: dividí los dos subíndices por ${c.g}.`);
+    add([{s:e.sym,n:1},{s:'O',n:c.v}],`El 2 del oxígeno también baja como subíndice ${del(e)} ${e.n}${c.g>1?' (y después se simplifica)':''}.`);
+  } else if(c.tipo==='hidroxido'){
+    if(c.v>1)add([{s:e.sym,n:1},{s:'OH',n:c.v}],`Faltan los paréntesis: con más de un OH se escribe (OH)<sub>${c.v}</sub>.`);
+    add([{s:e.sym,n:1},{s:'O',n:c.v},{s:'H',n:c.v}],`El OH va junto, como grupo: (OH)<sub>${c.v}</sub>.`);
+  } else if(!c.nmh){
+    add([{s:'H',n:c.v},{s:e.sym,n:1}],'En los hidruros metálicos se escribe primero el metal.');
+  } else {
+    add(c.hFirst?[{s:e.sym,n:1},{s:'H',n:c.h}]:[{s:'H',n:c.h},{s:e.sym,n:1}],c.hFirst?'En este caso se escribe primero el hidrógeno.':`En este caso se escribe primero el ${e.n}.`);
+  }
+  COMPOUNDS.filter(x=>x.e===e&&x!==c).forEach(x=>add(x.parts,x.tipo===c.tipo
+    ?`Esa es la fórmula con ${fmtOx(x.v)}. Acá actúa con <b>${fmtOx(c.v)}</b>.`
+    :`Esa fórmula es de un ${TIPO[x.tipo]}. Esto es un <b>${TIPO[c.tipo]}</b>.`));
+  const hit=V.find(v=>v[0]===L);if(hit)return hit[1];
+  if(!L.includes(e.sym.toLowerCase()))return `Fijate el símbolo: ${e.n} es <b>${e.sym}</b>.`;
+  return '';
+}
+function parseOx(input){
+  const s=input.trim().replace(/[−–]/g,'-').replace(/\s+/g,'');
+  let m=s.match(/^([+-])?(\d)$/);if(m)return {n:+m[2],sign:m[1]||''};
+  m=s.match(/^([+-])?\(?([ivx]+)\)?$/i);if(m){const n=ROM.indexOf(m[2].toUpperCase());if(n>0)return {n,sign:m[1]||''}}
+  return null;
+}
+
 function crossInfo(c){
   const e=c.e, ec='el'+(e.metal?'':' nm');
   if(c.tipo==='oxido'){
@@ -644,7 +788,91 @@ function crossSVG(x){
 }
 
 /* ---------- LABORATORIO ---------- */
-const LAB={sym:'Fe',v:3,tipo:'oxido'};
+const LAB={sym:'Fe',v:3,tipo:'oxido',mode:store.get('labMode','practica')};
+function partnerOf(c){
+  if(c.tipo==='oxido')return {lab:'Oxígeno (O)',v:-2,rule:'El oxígeno siempre actúa con −2.'};
+  if(c.tipo==='hidroxido')return {lab:'Oxhidrilo (OH)',v:-1,rule:'El oxhidrilo (OH) actúa con −1.'};
+  return c.nmh?{lab:'Hidrógeno (H)',v:1,rule:'Con no metales, el hidrógeno actúa con +1.'}:{lab:'Hidrógeno (H)',v:-1,rule:'Con metales, el hidrógeno actúa con −1.'};
+}
+function modeBar(){
+  return `<div class="modes" role="group" aria-label="Modo"><button data-mode="practica" aria-pressed="${LAB.mode==='practica'}">Lo resuelvo yo</button><button data-mode="solucion" aria-pressed="${LAB.mode==='solucion'}">Ver solución</button></div>`;
+}
+function practiceHTML(c){
+  const e=c.e,x=crossInfo(c),p=partnerOf(c);
+  const pf=(id,label,cls='',attrs='')=>`<label class="pf ${cls}" id="pf-${id}"><span>${label}</span><input id="p-${id}" ${attrs} autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><small class="pmsg" hidden></small></label>`;
+  return `<div class="pr">
+  <p class="pr-intro">Resolvelo vos: completá los pasos y tocá <b>Comprobar</b>. Las fórmulas escribilas con números normales, por ejemplo Fe2O3.</p>
+  <div class="pstep"><div class="ps-h"><span class="ps-n">1</span>Números de oxidación en este compuesto</div><div class="ps-row">
+    ${pf('e',`${cap(e.n)} (${e.sym})`,'',c.nmh?'placeholder="Ej: −3"':`value="+${c.v}" readonly`)}
+    ${pf('p',p.lab,'','placeholder="Ej: −2"')}</div></div>
+  <div class="pstep"><div class="ps-h"><span class="ps-n">2</span>Cruzá los números, sin el signo</div>
+    <div class="xrow" id="pf-x"><span>${x.L.lab}</span><input class="xsub" id="p-ls" inputmode="numeric" aria-label="Subíndice de ${x.L.lab}"><span>${x.R.lab}</span><input class="xsub" id="p-rs" inputmode="numeric" aria-label="Subíndice de ${x.R.lab}"></div>
+    <small class="pmsg" id="pm-x" hidden></small>
+    <p class="small-note">Antes de simplificar. Si queda 1, escribí 1.</p></div>
+  <div class="pstep"><div class="ps-h"><span class="ps-n">3</span>Fórmula final</div>
+    ${pf('f','Simplificada si hace falta','','placeholder="Ej: Fe2O3"')}<span class="pprev" id="p-prev" hidden></span></div>
+  <div class="pstep"><div class="ps-h"><span class="ps-n">4</span>Nombres</div><div class="ps-names">
+    ${pf('tr','Tradicional','tr')}${c.names.st?pf('st','Stock','st'):'<label class="pf st na"><span>Stock</span><input disabled value="No se usa en este caso"></label>'}${pf('si','Sistemática','si')}</div></div>
+  <div class="pr-res" id="pr-res" hidden></div>
+  <div class="pr-actions"><button class="btn primary" data-act="check">Comprobar</button><button class="btn" data-act="sol">Ver solución</button><button class="btn" data-act="rand">Otro al azar</button></div>
+  </div>`;
+}
+function checkPractice(){
+  const c=labCompound();if(!c)return;
+  const e=c.e,x=crossInfo(c),p=partnerOf(c);let ok=0,tot=0;
+  const mark=(w,m,good,msg)=>{w.classList.remove('ok','bad');w.classList.add(good?'ok':'bad');m.classList.toggle('ok',good);m.classList.toggle('bad',!good);m.innerHTML=msg||(good?'Bien':'');m.hidden=!m.innerHTML;tot++;if(good)ok++};
+  const fld=id=>[$('#pf-'+id),$('#pf-'+id+' .pmsg'),$('#p-'+id).value];
+  // paso 1
+  if(c.nmh){
+    const [w,m,v]=fld('e'),r=parseOx(v),val=r?(r.sign==='-'?-r.n:r.n):null;
+    if(!v.trim())mark(w,m,false,'Falta completar.');
+    else if(val===c.v)mark(w,m,true);
+    else if(r&&r.n===-c.v)mark(w,m,false,'Ojo con el signo: con hidrógeno, el no metal usa su número <b>negativo</b>.');
+    else mark(w,m,false,`Con hidrógeno, ${e.art} ${e.n} usa <b>${fmtOx(c.v)}</b>.`);
+  }
+  {
+    const [w,m,v]=fld('p'),r=parseOx(v),val=r?(r.sign==='-'?-r.n:r.n):null;
+    if(!v.trim())mark(w,m,false,'Falta completar.');
+    else if(val===p.v)mark(w,m,true);
+    else if(r&&r.n===Math.abs(p.v))mark(w,m,false,`Ojo con el signo: es <b>${fmtOx(p.v)}</b>.`);
+    else mark(w,m,false,p.rule);
+  }
+  // paso 2
+  {
+    const w=$('#pf-x'),m=$('#pm-x'),a=$('#p-ls').value.trim(),b=$('#p-rs').value.trim(),ls=+a,rs=+b;
+    if(!a||!b)mark(w,m,false,'Falta completar los dos subíndices.');
+    else if(ls===x.ls&&rs===x.rs)mark(w,m,true,x.ls!==1&&x.rs!==1&&gcd(x.ls,x.rs)>1?'Bien. Ahora fijate si se puede simplificar.':'Bien');
+    else if(c.tipo==='oxido'&&c.g>1&&ls===c.a&&rs===c.b)mark(w,m,true,'Bien, y ya lo simplificaste.');
+    else if(ls===x.rs&&rs===x.ls)mark(w,m,false,'Al revés: el número de cada uno baja como subíndice <b>del otro</b>.');
+    else mark(w,m,false,`Quedan ${x.L.lab}<sub>${x.ls}</sub> y ${x.R.lab}<sub>${x.rs}</sub>: cada número baja (sin el signo) al otro.`);
+  }
+  // paso 3
+  {
+    const [w,m,v]=fld('f'),r=checkFormula(c,v);
+    if(r.invalid)mark(w,m,false,'Falta completar.');
+    else if(r.ok)mark(w,m,true,r.notes.join(' '));
+    else mark(w,m,false,r.diag||'Revisá el cruce y si hacía falta simplificar.');
+  }
+  // paso 4
+  ['tr','st','si'].forEach(k=>{
+    if(!c.names[k])return;
+    const [w,m,v]=fld(k),r=checkName(c,k,v);
+    if(r.invalid)mark(w,m,false,'Falta completar.');
+    else if(r.ok)mark(w,m,true,r.notes.join(' '));
+    else mark(w,m,false,r.diag||'No es ese nombre. Revisá la regla en el machete.');
+  });
+  const res=$('#pr-res'),all=ok===tot;
+  res.className='pr-res '+(all?'ok':'part');
+  res.innerHTML=all?'¡Perfecto! Lo resolviste completo.':`${ok} de ${tot} bien. Corregí lo que quedó en rojo y volvé a comprobar, o tocá «Ver solución».`;
+  res.hidden=false;
+  if(all)confetti();
+}
+function randomCombo(){
+  const c=rnd(COMPOUNDS);LAB.sym=c.e.sym;LAB.tipo=c.tipo;LAB.v=c.nmh?c.e.ox[c.e.ox.length-1]:c.v;
+  $$('.tile').forEach(t=>t.setAttribute('aria-pressed',t.dataset.sym===LAB.sym));
+  renderBench();
+  if(window.innerWidth<900)$('#bench').scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
+}
 function labCompound(){
   const e=EL[LAB.sym];
   if(!e.metal&&LAB.tipo==='hidruro') return BY['hnm-'+e.sym]||null;
@@ -657,17 +885,18 @@ function renderPicker(){
 function renderBench(){
   const e=EL[LAB.sym], c=labCompound();
   const nmH=!e.metal&&LAB.tipo==='hidruro';
-  let h=`<div class="bench-head"><div class="big-tile${e.metal?'':' nm'}"><i>${e.z}</i>${e.sym}</div>
+  let h=modeBar()+`<div class="bench-head"><div class="big-tile${e.metal?'':' nm'}"><i>${e.z}</i>${e.sym}</div>
    <div><div class="kicker">${e.metal?'Metal':'No metal'}</div><h2>${cap(e.n)}</h2><p>Números de oxidación: <b>${listY(e.ox.map(x=>'+'+x))}</b></p></div></div>`;
   h+=`<div class="ctl"><span class="ctl-l">Número de oxidación</span>`;
-  if(nmH) h+=`<div><span class="note-pill">Con hidrógeno, ${e.art} ${e.n} usa <b>${fmtOx(c.v)}</b></span></div>`;
+  if(nmH) h+=LAB.mode==='practica'?`<div><span class="note-pill">Con hidrógeno usa un número especial: averigualo en el paso 1</span></div>`:`<div><span class="note-pill">Con hidrógeno, ${e.art} ${e.n} usa <b>${fmtOx(c.v)}</b></span></div>`;
   else h+=`<div class="chips">${e.ox.map(v=>`<button class="chip" data-v="${v}" aria-pressed="${LAB.v===v}">+${v}</button>`).join('')}</div>`;
   h+=`</div><div class="ctl"><span class="ctl-l">Combinar con</span><div class="seg">
     <button data-t="oxido" aria-pressed="${LAB.tipo==='oxido'}"><b>Óxido</b><span>+ oxígeno</span></button>
     <button data-t="hidruro" aria-pressed="${LAB.tipo==='hidruro'}"><b>Hidruro</b><span>+ hidrógeno</span></button>
     <button data-t="hidroxido" aria-pressed="${LAB.tipo==='hidroxido'}" ${e.metal?'':'disabled'}><b>Hidróxido</b><span>+ OH</span></button>
   </div>${e.metal?'':'<p class="small-note">Los no metales no forman hidróxidos.</p>'}</div>`;
-  if(c){
+  if(c&&LAB.mode==='practica'){h+=practiceHTML(c)}
+  else if(c){
     const x=crossInfo(c);
     h+=`<div class="cross"><div class="cross-t">Cómo se arma la fórmula</div>${crossSVG(x)}<p class="steps">${x.text}</p></div>
     <div class="final"><span class="lbl">${TIPO_T[c.tipo]}${c.nmh?' no metálico':''}</span><span class="formula">${fHTML(c.parts)}</span></div>
@@ -685,9 +914,23 @@ $('#groups').addEventListener('click',ev=>{
   if(window.innerWidth<900) $('#bench').scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
 });
 $('#bench').addEventListener('click',ev=>{
+  const md=ev.target.closest('[data-mode]'); if(md){LAB.mode=md.dataset.mode;store.set('labMode',LAB.mode);renderBench();return}
+  const act=ev.target.closest('[data-act]');
+  if(act){
+    if(act.dataset.act==='check')checkPractice();
+    else if(act.dataset.act==='sol'){LAB.mode='solucion';store.set('labMode',LAB.mode);renderBench()}
+    else randomCombo();
+    return;
+  }
   const ch=ev.target.closest('.chip'); if(ch){LAB.v=+ch.dataset.v;renderBench();return}
   const sg=ev.target.closest('.seg button'); if(sg&&!sg.disabled){LAB.tipo=sg.dataset.t;renderBench()}
 });
+$('#bench').addEventListener('input',ev=>{
+  if(ev.target.id!=='p-f')return;
+  const t=ev.target.value,pv=$('#p-prev');
+  if(looksFormula(t)){pv.innerHTML=`Se lee: <b>${esc(subNorm(t)).replace(/(\d+)/g,'<sub>$1</sub>')}</b>`;pv.hidden=false}else pv.hidden=true;
+});
+$('#bench').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.closest('.pr input')){ev.preventDefault();checkPractice()}});
 $('#hideOx').addEventListener('click',function(){const on=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',on);$('#picker').classList.toggle('hide-ox',on)});
 
 /* ---------- TABS ---------- */
