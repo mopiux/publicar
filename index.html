@@ -273,4 +273,571 @@ const METALS=[
  ['Cu','cobre',[1,2],['cuproso','cúprico']],['Hg','mercurio',[1,2],['mercurioso','mercúrico']],
  ['Au','oro',[1,3],['auroso','áurico']],['Fe','hierro',[2,3],['ferroso','férrico']],
  ['Co','cobalto',[2,3],['cobaltoso','cobáltico']],['Ni','níquel',[2,3],['niqueloso','niquélico']],
- ['Cr','cromo',[2,3],['cromoso','crómico']],['Mn','manganeso',[2,3],['mangano
+ ['Cr','cromo',[2,3],['cromoso','crómico']],['Mn','manganeso',[2,3],['manganoso','mangánico']],
+ ['Sn','estaño',[2,4],['estañoso','estánnico']],['Pb','plomo',[2,4],['plumboso','plúmbico']],
+ ['Bi','bismuto',[3,5],['bismutoso','bismútico']],
+].map(([sym,n,ox,tr,art])=>({sym,n,ox,tr,art:art||'el',metal:true}));
+const EL={};METALS.forEach(e=>EL[e.sym]=e);
+const NM={
+ C:{n:'carbono',ox:[2,4],neg:4,trH:'metano'},
+ Si:{n:'silicio',ox:[4],neg:4,trH:'silano'},
+ N:{n:'nitrógeno',ox:[3,5],neg:3,trH:'amoníaco',diat:1},
+ P:{n:'fósforo',ox:[3,5],neg:3,trH:'fosfina'},
+ As:{n:'arsénico',ox:[3,5],neg:3,trH:'arsina'},
+ S:{n:'azufre',ox:[2,4,6],neg:2,uro:'sulfuro',hid:'sulfhídrico'},
+ Se:{n:'selenio',ox:[2,4,6],neg:2,uro:'seleniuro',hid:'selenhídrico'},
+ Te:{n:'teluro',ox:[2,4,6],neg:2,uro:'telururo',hid:'telurhídrico'},
+ Cl:{n:'cloro',ox:[1,3,5,7],neg:1,uro:'cloruro',hid:'clorhídrico',diat:1},
+ Br:{n:'bromo',ox:[1,3,5,7],neg:1,uro:'bromuro',hid:'bromhídrico',diat:1},
+ I:{n:'yodo',ox:[1,3,5,7],neg:1,uro:'yoduro',hid:'yodhídrico',diat:1},
+};
+Object.entries(NM).forEach(([s,x])=>{x.sym=s;x.art='el';x.metal=false});
+const SALT_X=['Cl','Br','I','S','Se','Te'];
+const GROUP={H:1,Li:1,Na:1,K:1,Be:2,Mg:2,Ca:2,Ba:2,Al:13,C:14,Si:14,Sn:14,Pb:14,N:15,P:15,As:15,Bi:15,O:16,S:16,Se:16,Te:16,F:17,Cl:17,Br:17,I:17};
+const del=e=>e.art==='la'?'de la':'del';
+const fHTML=p=>p.map(x=>x.g?(x.n>1?`(${x.g})<sub>${x.n}</sub>`:x.g):`${x.s}${x.n>1?`<sub>${x.n}</sub>`:''}`).join('');
+const fKey=p=>p.map(x=>x.g?(x.n>1?`(${x.g})${x.n}`:x.g):`${x.s}${x.n>1?x.n:''}`).join('');
+
+/* ===== conteo y balanceo ===== */
+function parseFormula(str){
+  const s=subNorm(str);let i=0;
+  const num=()=>{let d='';while(i<s.length&&/\d/.test(s[i]))d+=s[i++];return d?+d:1};
+  function group(){const c={};
+    while(i<s.length){const ch=s[i];
+      if(ch==='('){i++;const g=group();if(s[i]!==')')throw 0;i++;const n=num();for(const k in g)c[k]=(c[k]||0)+g[k]*n}
+      else if(ch===')')break;
+      else if(/[A-Z]/.test(ch)){let sym=ch;i++;if(i<s.length&&/[a-z]/.test(s[i])){sym+=s[i];i++}const n=num();c[sym]=(c[sym]||0)+n}
+      else throw 0;}
+    return c}
+  try{const c=group();if(i!==s.length||!Object.keys(c).length)return null;return c}catch(e){return null}
+}
+function tally(fs,coefs){const t={};fs.forEach((f,i)=>{const c=parseFormula(f)||{};for(const k in c)t[k]=(t[k]||0)+c[k]*coefs[i]});return t}
+function balance(fs,nR){
+  const comps=fs.map(parseFormula),els=[...new Set(comps.flatMap(c=>Object.keys(c)))],n=fs.length,co=new Array(n).fill(1);let found=null;
+  const ok=()=>els.every(k=>{let s=0;for(let i=0;i<n;i++)s+=(i<nR?1:-1)*co[i]*(comps[i][k]||0);return s===0});
+  (function rec(i){if(found)return;if(i===n){if(ok())found=co.slice();return}for(let k=1;k<=12&&!found;k++){co[i]=k;rec(i+1)}})(0);
+  return found;
+}
+
+/* ===== compuestos ===== */
+const TW={oxido:'óxido',hidroxido:'hidróxido',hidM:'hidruro'};
+const metalTr=(e,v,w)=>e.ox.length===1?`${w} de ${e.n}`:`${w} ${e.tr[e.ox.indexOf(v)]}`;
+function names(c){
+  const e=c.e;
+  if(c.tipo==='oxido')return {tr:metalTr(e,c.v,'óxido'),st:`óxido de ${e.n} (${ROM[c.v]})`,si:`${OXW[c.b]} de ${c.a>1?PRE[c.a]:''}${e.n}`};
+  if(c.tipo==='hidroxido')return {tr:metalTr(e,c.v,'hidróxido'),st:`hidróxido de ${e.n} (${ROM[c.v]})`,si:`${c.v>1?PRE[c.v]:''}hidróxido de ${e.n}`};
+  if(c.tipo==='hidM')return {tr:metalTr(e,c.v,'hidruro'),st:`hidruro de ${e.n} (${ROM[c.v]})`,si:`${c.v>1?PRE[c.v]:''}hidruro de ${e.n}`};
+  if(c.tipo==='hidNM')return c.special?{tr:c.x.trH,st:null,si:`${PRE[c.h]}hidruro de ${c.x.n}`}:{tr:`ácido ${c.x.hid}`,st:null,si:`${c.x.uro} de ${c.h>1?PRE[c.h]:''}hidrógeno`};
+  const x=c.x;
+  return {tr:metalTr(e,c.v,x.uro),st:`${x.uro} de ${e.n} (${ROM[c.v]})`,si:`${c.q>1?PRE[c.q]:''}${x.uro} de ${c.p>1?PRE[c.p]:''}${e.n}`};
+}
+const fin=c=>{c.key=[c.tipo,c.e.sym,c.v,c.x?c.x.sym:''].join('|');if(c.e.metal||c.tipo==='hidNM')c.names=names(c);return c};
+function oxideOf(e,v){let a=2,b=v;const g=gcd(a,b);a/=g;b/=g;return fin({tipo:'oxido',e,v,a,b,g,parts:[{s:e.sym,n:a},{s:'O',n:b}]})}
+function hydroxOf(e,v){return fin({tipo:'hidroxido',e,v,parts:[{s:e.sym,n:1},{g:'OH',n:v}]})}
+function hidMOf(e,v){return fin({tipo:'hidM',e,v,parts:[{s:e.sym,n:1},{s:'H',n:v}]})}
+function hidNMOf(x){const h=x.neg,hf=!!x.uro;return fin({tipo:'hidNM',x,e:x,v:-h,h,hFirst:hf,special:!x.uro,parts:hf?[{s:'H',n:h},{s:x.sym,n:1}]:[{s:x.sym,n:1},{s:'H',n:h}]})}
+function saltOf(e,v,x){const w=x.neg,g=gcd(v,w),p=w/g,q=v/g;return fin({tipo:'sal',e,v,x,w,g,p,q,parts:[{s:e.sym,n:p},{s:x.sym,n:q}]})}
+const ALL=[];
+METALS.forEach(e=>e.ox.forEach(v=>{ALL.push(oxideOf(e,v),hydroxOf(e,v),hidMOf(e,v));SALT_X.forEach(s=>ALL.push(saltOf(e,v,NM[s])))}));
+Object.values(NM).forEach(x=>ALL.push(hidNMOf(x)));
+
+/* ===== corrección de nombres ===== */
+function alts(c,nom){
+  const base=c.names[nom];if(!base)return [];const A=[{s:base}],e=c.e;
+  if(nom==='st'&&c.tipo!=='hidNM'&&e.ox.length===1)A.push({s:base.replace(/ \([IVX]+\)$/,''),note:`También está bien sin el número. En tu carpeta lo escriben con (${ROM[c.v]}).`});
+  if(nom==='tr'){
+    if(e.sym==='Sn'&&c.v===4)A.push({s:base.replace('estánnico','estánico')});
+    if(c.tipo==='hidNM'){
+      if(c.x.sym==='N')A.push({s:'amoniaco'});if(c.x.sym==='P')A.push({s:'fosfano'});if(c.x.sym==='As')A.push({s:'arsano'});
+      if(!c.special){const note=`Así se llama como gas (g). Disuelto en agua (ac) es «${base}».`;A.push({s:c.names.si.replace('dihidrógeno','hidrógeno'),note});if(c.h>1)A.push({s:c.names.si,note})}
+    }
+  }
+  if(nom==='si'){
+    if(c.tipo==='oxido'){const L={4:'tetraóxido',5:'pentaóxido'};if(L[c.b])A.push({s:base.replace(OXW[c.b],L[c.b])});if(c.b===1&&c.a>1)A.push({s:base.replace('monóxido','óxido')})}
+    if((c.tipo==='hidroxido'||c.tipo==='hidM')&&c.v===1)A.push({s:'mono'+base});
+    if(c.tipo==='hidNM'&&!c.special&&c.h===2)A.push({s:base.replace('dihidrógeno','hidrógeno')});
+    if(c.tipo==='sal'&&c.q===1)A.push({s:'mono'+base});
+  }
+  return A;
+}
+const NOMLBL={tr:'T (tradicional)',st:'S (Stock)',si:'A (atomicidad)'};
+const UN={oxido:'un óxido',hidroxido:'un hidróxido',hidM:'un hidruro',hidNM:'un hidruro',sal:'una sal binaria'};
+const wordOf=c=>c.tipo==='sal'?c.x.uro:TW[c.tipo];
+function diffMsg(c,x){
+  const e=c.e;
+  if(x.e.sym===e.sym&&x.tipo===c.tipo&&(!c.x||x.x.sym===c.x.sym))return `Ese es con ${fmtOx(x.v)}. Acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`;
+  if(c.tipo==='sal'&&x.tipo==='sal'&&x.e.sym===e.sym)return `Ese nombre es con otro no metal (${x.x.n}). Acá es ${c.x.n}: <b>${c.x.uro}</b>.`;
+  if(x.tipo!==c.tipo&&!(x.tipo.startsWith('hid')&&c.tipo.startsWith('hid')&&x.tipo!=='hidroxido'&&c.tipo!=='hidroxido'))return `Ese nombre es de ${UN[x.tipo]}. Esto es <b>${UN[c.tipo]}</b>.`;
+  return 'Ese nombre es de otro elemento.';
+}
+function checkName(c,nom,input){
+  const u=compact(input);if(!u)return {empty:true};
+  for(const a of alts(c,nom))if(compact(a.s)===u){
+    const notes=[];if(a.note)notes.push(a.note);else if(accentKey(input)!==accentKey(a.s))notes.push(`Ojo con las tildes: «${a.s}».`);
+    if(nom==='st'&&/\s[ivx]+\s*$/i.test(input.trim()))notes.push('El romano va entre paréntesis.');
+    return {ok:true,notes};
+  }
+  const e=c.e;let d='';
+  if(looksFormula(input))d='Acá va el nombre, no la fórmula.';
+  if(!d)for(const o of ['tr','st','si'])if(o!==nom&&alts(c,o).some(a=>compact(a.s)===u)){d=`Ese nombre está bien, pero es la ${NOMLBL[o]}.`;break}
+  if(!d)for(const x of ALL){if(x.key===c.key)continue;if(['tr','st','si'].some(o=>alts(x,o).some(a=>compact(a.s)===u))){d=diffMsg(c,x);break}}
+  if(!d&&nom==='st'&&c.names.st){
+    const m=input.match(/\d+/);
+    if(m)d=`En Stock el número va en romanos: (${ROM[+m[0]]||'?'}).`;
+    else{const r=input.toLowerCase().match(/\(?\s*([ivx]+)\s*\)?\s*$/);if(r){const val=ROM.indexOf(r[1].toUpperCase());if(val>0&&val!==c.v)d=`El romano no es ese: acá ${e.art} ${e.n} actúa con +${c.v} → (${ROM[c.v]}).`}}
+    if(!d&&e.ox.length>1&&u===compact(`${wordOf(c)} de ${e.n}`))d=`Falta el número en romanos: ${e.art} ${e.n} tiene más de uno.`;
+  }
+  if(!d&&nom==='tr'&&c.tipo!=='hidNM'){
+    const w=wordOf(c);
+    if(e.ox.length>1&&u===compact(`${w} de ${e.n}`))d=`${cap(e.art)} ${e.n} tiene dos números: se usa -oso (el menor) o -ico (el mayor).`;
+    else if(e.ox.length===1&&/(oso|ico)$/.test(u))d=`${cap(e.art)} ${e.n} tiene un solo número, así que no lleva -oso ni -ico: «${w} de ${e.n}».`;
+  }
+  if(!d&&c.tipo==='sal'&&!u.startsWith(compact(c.x.uro))&&!u.startsWith(compact(PRE[c.q]+c.x.uro)))d=`El nombre empieza por el no metal terminado en -uro: <b>${c.x.uro}</b>.`;
+  if(!d&&nom==='si')d='Contá los átomos de la fórmula y usá los prefijos di, tri, tetra…';
+  return {ok:false,diag:d};
+}
+
+/* ===== corrección de fórmulas ===== */
+function wrongs(c){
+  const V=[],ck=fKey(c.parts).toLowerCase(),e=c.e;
+  const add=(p,m)=>{const k=fKey(p).toLowerCase();if(k!==ck&&!V.some(v=>v[0]===k))V.push([k,m])};
+  if(c.tipo==='hidroxido'){
+    if(c.v>1)add([{s:e.sym,n:1},{s:'OH',n:c.v}],`Faltan los paréntesis: con más de un OH se escribe (OH)<sub>${c.v}</sub>.`);
+    const ox=oxideOf(e,c.v);add(ox.parts,'Ese es el óxido. El producto con agua es el <b>hidróxido</b>: metal + OH.');
+    if(ox.a>1){const m=`El hidróxido lleva <b>un solo</b> átomo de metal. Los ${ox.a} que hay en el óxido se arreglan con el coeficiente (el número de adelante).`;add([{s:e.sym,n:ox.a},{g:'OH',n:c.v}],m);add([{s:e.sym,n:ox.a},{g:'OH',n:c.v*ox.a}],m)}
+    e.ox.filter(w=>w!==c.v).forEach(w=>add(hydroxOf(e,w).parts,`Ese sería con ${fmtOx(w)}. Fijate en el óxido: acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`));
+    add([{s:e.sym,n:1},{s:'H',n:c.v}],'Eso es un hidruro. El hidróxido lleva el grupo OH.');
+  } else if(c.tipo==='oxido'){
+    if(c.a!==c.b)add([{s:e.sym,n:c.b},{s:'O',n:c.a}],'Invertiste los subíndices: el número de cada uno baja <b>al otro</b>.');
+    if(c.g>1)add([{s:e.sym,n:2},{s:'O',n:c.v}],`Cruzaste bien pero falta simplificar: dividí por ${c.g}.`);
+    add([{s:e.sym,n:1},{s:'O',n:2}],'El O<sub>2</sub> es como viene el oxígeno solo. En el óxido se cruzan los números de oxidación.');
+    e.ox.filter(w=>w!==c.v).forEach(w=>add(oxideOf(e,w).parts,`Ese sería con ${fmtOx(w)}. Acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`));
+  } else if(c.tipo==='hidM'){
+    add([{s:'H',n:c.v},{s:e.sym,n:1}],'En los hidruros metálicos se escribe primero el metal y después el H.');
+    if(c.v>1)add([{s:e.sym,n:c.v},{s:'H',n:1}],`Al revés: el ${e.sym} queda con 1 y el hidrógeno con ${c.v} (el número del metal).`);
+    add([{s:e.sym,n:1},{s:'H',n:2}],`No se copia el 2 del H<sub>2</sub>: el subíndice del H es el número de oxidación del metal (+${c.v}).`);
+    e.ox.filter(w=>w!==c.v).forEach(w=>add(hidMOf(e,w).parts,`Ese sería con ${fmtOx(w)}. Acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`));
+    add([{s:e.sym,n:1},{g:'OH',n:c.v}],'Eso es un hidróxido. El hidruro es solo metal + H.');
+  } else if(c.tipo==='hidNM'){
+    const x=c.x,ord=n=>c.hFirst?[{s:'H',n},{s:x.sym,n:1}]:[{s:x.sym,n:1},{s:'H',n}];
+    add(c.hFirst?[{s:x.sym,n:1},{s:'H',n:c.h}]:[{s:'H',n:c.h},{s:x.sym,n:1}],c.hFirst?'En este caso se escribe primero el hidrógeno.':`En este caso se escribe primero el ${x.n}.`);
+    x.ox.forEach(p=>add(ord(p),`Con hidrógeno, el ${x.n} usa su número <b>negativo</b> (−${c.h}), no los positivos. Por eso lleva ${c.h} H.`));
+    if(x.diat){
+      add(c.hFirst?[{s:'H',n:2*c.h},{s:x.sym,n:2}]:[{s:x.sym,n:2},{s:'H',n:2*c.h}],`No se copia el 2 de ${x.sym}<sub>2</sub>: queda ${fHTML(c.parts)} y el 2 se arregla con el coeficiente.`);
+      add(c.hFirst?[{s:'H',n:2},{s:x.sym,n:2}]:[{s:x.sym,n:2},{s:'H',n:2}],`No se copian los subíndices de H<sub>2</sub> y ${x.sym}<sub>2</sub>: se cruzan los números de oxidación (H +1, ${x.sym} −${c.h}).`);
+    }
+  } else if(c.tipo==='sal'){
+    const x=c.x;
+    if(c.p!==c.q)add([{s:e.sym,n:c.q},{s:x.sym,n:c.p}],'Invertiste los subíndices: el número de cada uno baja como subíndice <b>del otro</b>.');
+    if(c.g>1)add([{s:e.sym,n:c.w},{s:x.sym,n:c.v}],`Cruzaste bien, pero falta simplificar: dividí los dos subíndices por ${c.g}.`);
+    if(x.diat)add([{s:e.sym,n:1},{s:x.sym,n:2}],`No se copia el 2 de ${x.sym}<sub>2</sub>: en la sal se cruzan los números (${e.sym} +${c.v}, ${x.sym} −${c.w}).`);
+    add([{s:x.sym,n:c.q},{s:e.sym,n:c.p}],'En las sales binarias se escribe primero el metal y después el no metal.');
+    e.ox.filter(w=>w!==c.v).forEach(w=>add(saltOf(e,w,x).parts,`Ese sería con ${fmtOx(w)}. Acá ${e.art} ${e.n} actúa con <b>${fmtOx(c.v)}</b>.`));
+    x.ox.forEach(p=>add(saltOf(e,c.v,{...x,neg:p}).parts,`En una sal binaria el no metal usa su número <b>negativo</b> (−${c.w}), no los positivos.`));
+    add(oxideOf(e,c.v).parts,'Eso es el óxido. La sal binaria es metal + no metal, sin oxígeno.');
+  }
+  return V;
+}
+function checkProduct(c,input){
+  if(!input.trim())return {empty:true};
+  const raw=subNorm(input).replace(/([A-Za-z)])1(?!\d)/g,'$1'),key=fKey(c.parts);
+  if(raw===key)return {ok:true,notes:[]};
+  if(raw.toLowerCase()===key.toLowerCase())return {ok:true,notes:[`Ojo con las mayúsculas: se escribe ${fHTML(c.parts)}.`]};
+  const hit=wrongs(c).find(w=>w[0]===raw.toLowerCase());if(hit)return {ok:false,diag:hit[1]};
+  const got=parseFormula(input);if(!got)return {ok:false,diag:'No entiendo esa fórmula. Escribí cada símbolo empezando con mayúscula, por ejemplo Fe(OH)3.'};
+  const want=parseFormula(key);
+  if(c.tipo==='sal'&&got.O)return {ok:false,diag:'Las sales binarias no tienen oxígeno: son solo metal y no metal.'};
+  if(c.tipo==='sal'&&got.H)return {ok:false,diag:'La sal no lleva hidrógeno: el H del ácido se junta con el OH y forma el agua.'};
+  const miss=Object.keys(want).filter(k=>!got[k]),extra=Object.keys(got).filter(k=>!want[k]);
+  if(miss.length||extra.length)return {ok:false,diag:`${miss.length?`Falta: ${miss.join(', ')}. `:''}${extra.length?`Sobra: ${extra.join(', ')}.`:''}`};
+  return {ok:false,diag:'Están los elementos correctos, pero los subíndices no. Cruzá los números de oxidación (sin el signo) y simplificá si se puede.'};
+}
+
+/* ===== reacciones ===== */
+const sp=(f,html)=>({f,html:html||fmtF(f)});
+const un=c=>({unk:c,f:fKey(c.parts),html:fHTML(c.parts)});
+const elemSp=x=>x.diat?sp(x.sym+'2'):sp(x.sym);
+function R(kind,species,ctx){const fs=species.map(s=>s.f);return {kind,species,nR:2,fs,coefs:balance(fs,2),ctx:ctx||{}}}
+function rxWater(e,v){const ox=oxideOf(e,v);return R('agua',[sp(fKey(ox.parts),fHTML(ox.parts)),sp('H2O'),un(hydroxOf(e,v))],{ox})}
+function rxMetalO2(e,v){return R('metalO2',[sp(e.sym),sp('O2'),un(oxideOf(e,v))])}
+function rxHidM(e,v){return R('hidM',[sp(e.sym),sp('H2'),un(hidMOf(e,v))])}
+function rxHidNM(x){return R('hidNM',[elemSp(x),sp('H2'),un(hidNMOf(x))])}
+function rxSalt(e,v,x){return R('sal',[sp(e.sym),elemSp(x),un(saltOf(e,v,x))])}
+function rxNeutral(e,v,x){const hy=hydroxOf(e,v),ac=hidNMOf(x);return R('neutral',[sp(fKey(hy.parts),fHTML(hy.parts)),sp(fKey(ac.parts),fHTML(ac.parts)),un(saltOf(e,v,x)),sp('H2O')])}
+const STEPT={agua:'Óxido básico + agua → hidróxido',metalO2:'Metal + oxígeno → óxido básico',hidM:'Metal + hidrógeno → hidruro metálico',hidNM:'No metal + hidrógeno → hidruro no metálico',sal:'Metal + no metal → sal binaria',neutral:'Hidróxido + hidrácido → sal binaria + agua'};
+const unkOf=r=>r.species.find(s=>s.unk).unk;
+function productHints(r){
+  const c=unkOf(r),e=c.e,v=c.v;
+  switch(r.kind){
+    case 'agua':{const ox=r.ctx.ox;return [`Primero averiguá con qué número actúa ${e.art} ${e.n} en el óxido: el oxígeno vale −2 y todo suma cero.`,`${ox.b} O × (−2) = −${2*ox.b}. ${ox.a>1?`Los ${ox.a} ${e.sym} suman +${2*ox.b}, o sea que cada uno es`:`Entonces ${e.sym} es`} <b>+${v}</b>.`,`El OH vale −1. Metal con +${v} → lleva ${v} OH.`]}
+    case 'metalO2':return [`${cap(e.art)} ${e.n} actúa con +${v} y el oxígeno con −2.`,`Cruzá los números sin el signo: el ${v} va al O y el 2 va al ${e.sym}.`,c.g>1?`Quedó ${e.sym}<sub>2</sub>O<sub>${v}</sub>: simplificá dividiendo por ${c.g}.`:'Si los dos subíndices se pueden dividir por el mismo número, simplificá.'];
+    case 'hidM':return [`${cap(e.art)} ${e.n} actúa con +${v}. Con metales, el hidrógeno actúa con −1.`,`Cruzá sin el signo: el ${e.sym} queda con 1 y el H con ${v}.`,'Se escribe primero el metal y después el H.'];
+    case 'hidNM':{const x=c.x,G=GROUP[x.sym];return [`Con hidrógeno, el ${x.n} usa su número negativo. Está en el grupo ${G}: ${G%10} − 8 = <b>−${c.h}</b>.`,`El hidrógeno vale +1. Para compensar −${c.h} hacen falta ${c.h} H.`,c.hFirst?`Con los grupos 16 y 17 el H se escribe primero.`:`Con los grupos 14 y 15 el no metal se escribe primero.`]}
+    case 'sal':{const x=c.x,G=GROUP[x.sym];return [`En una sal binaria el no metal usa su número negativo: el ${x.n} está en el grupo ${G} → <b>−${c.w}</b>.`,`${cap(e.art)} ${e.n} actúa con +${v}. Cruzá sin el signo: el ${v} va al ${x.sym} y el ${c.w} va al ${e.sym}.`,c.g>1?`Quedó ${fHTML([{s:e.sym,n:c.w},{s:x.sym,n:c.v}])}: simplificá dividiendo por ${c.g}.`:'Primero va el metal y después el no metal.']}
+    case 'neutral':{const x=c.x,hy=hydroxOf(e,v),ac=hidNMOf(x);return [`El hidróxido te dice el número del metal: ${fHTML(hy.parts)} tiene ${v} OH → ${e.sym} es <b>+${v}</b>.`,`El ácido te dice el del no metal: ${fHTML(ac.parts)} tiene ${c.w} H → ${x.sym} es <b>−${c.w}</b>.`,`El H del ácido y el OH del hidróxido forman el agua. Lo que queda es la sal: cruzá +${v} y −${c.w}${c.g>1?' y simplificá':''}.`]}
+  }
+}
+function balanceHints(r){
+  const ti=r.species.findIndex(s=>s.unk),c=r.species[ti].unk,k=r.coefs[ti];
+  const first={agua:'Empezá por el metal. Después igualá el hidrógeno con el agua; el oxígeno tiene que cerrar solo.',metalO2:'Empezá por el oxígeno: buscá un número que sirva para el O<sub>2</sub> y para el óxido. Después igualá el metal.',hidM:'Empezá por el hidrógeno: cada H<sub>2</sub> trae 2 H. Después igualá el metal.',hidNM:'Si el no metal viene de a dos (Cl<sub>2</sub>, N<sub>2</sub>…), empezá por él. Después igualá el hidrógeno: cada H<sub>2</sub> trae 2.',sal:'Empezá por el no metal (si viene de a dos, como Cl<sub>2</sub>, trae 2 átomos). Después igualá el metal.',neutral:'Empezá por el metal y el no metal. Después contá los H y los O: forman el agua.'}[r.kind];
+  return ['Tocá «Contar átomos» y fijate qué elemento no coincide de los dos lados.',first,`Adelante de ${fHTML(c.parts)} va <b>${k}</b>${k===1?' (el 1 no se escribe)':''}.`];
+}
+function namesWhy(c){
+  const e=c.e;
+  if(c.tipo==='hidNM'){const x=c.x;return {tr:c.special?`Tiene nombre propio: ${c.names.tr}.`:`Disuelto en agua: «ácido» + raíz + «-hídrico». Como gas (g) se llama ${c.names.si.replace('dihidrógeno','hidrógeno')}.`,st:'En los hidruros de no metales no se usa Stock.',si:c.special?`${c.h} H → ${PRE[c.h]}hidruro de ${x.n}.`:`No metal terminado en -uro (${x.uro}) + «de» + hidrógeno, con prefijo según los H (${c.h}).`}}
+  const w=wordOf(c);
+  let tr=e.ox.length===1?`${cap(e.art)} ${e.n} tiene un solo número → «${w} de ${e.n}».`:`${cap(e.art)} ${e.n} tiene +${e.ox[0]} (-oso) y +${e.ox[1]} (-ico). Acá usa +${c.v} → ${e.tr[e.ox.indexOf(c.v)]}.`;
+  if(c.tipo==='sal')tr=`El no metal termina en -uro: ${c.x.uro}. `+tr;
+  const st=`Número de oxidación del metal en romanos: +${c.v} → (${ROM[c.v]}).`;
+  let si;
+  if(c.tipo==='oxido')si=`${c.b} O → ${OXW[c.b]}; ${c.a} ${e.sym} → ${c.a>1?PRE[c.a]+e.n:e.n}.`;
+  else if(c.tipo==='sal')si=`${c.q} ${c.x.sym} → ${c.q>1?PRE[c.q]:''}${c.x.uro}; ${c.p} ${e.sym} → ${c.p>1?PRE[c.p]+e.n:e.n}.`;
+  else{const u=c.tipo==='hidM'?'H':'OH';si=c.v>1?`${c.v} ${u} → ${PRE[c.v]}${w}.`:`Un solo ${u}: sin prefijo.`}
+  return {tr,st,si};
+}
+
+/* ===== puntaje ===== */
+const SCORE={stk:store.get('stk',0),done:store.get('done',0)};
+function hud(){$('#stk').textContent=SCORE.stk;$('#done').textContent=SCORE.done;$('#stkP').classList.toggle('hot',SCORE.stk>=3)}
+function solved(clean){SCORE.done++;SCORE.stk=clean?SCORE.stk+1:0;store.set('stk',SCORE.stk);store.set('done',SCORE.done);hud();if(clean)confetti()}
+
+/* ===== ejercicio ===== */
+const NOMS=[['tr','T · Tradicional'],['st','S · Stock'],['si','A · Atomicidad']];
+let EX=null;
+const CONS='Si un coeficiente es 1, podés dejarlo vacío.';
+function exWater(e,v){const r=rxWater(e,v);return {rx:[r],target:unkOf(r),consigna:`Completá el producto de la reacción y <b>balanceá si es necesario</b>. ${CONS}`}}
+function newExercise(){
+  const s=SUB[VIEW];let X;
+  const e=rnd(METALS),v=rnd(e.ox),giv=`${cap(e.n)} (${e.sym}) actuando con ${fmtOx(v)}`;
+  if(VIEW==='hidroxidos'){
+    if(s==='agua')X=exWater(e,v);
+    else{const r1=rxMetalO2(e,v),r2=rxWater(e,v);X={rx:[r1,r2],target:unkOf(r2),given:giv,consigna:`Formá el óxido básico y después el hidróxido. Escribí los productos y <b>balanceá</b>. ${CONS}`}}
+  } else if(VIEW==='hidruros'){
+    if(s==='metal'){const r=rxHidM(e,v);X={rx:[r],target:unkOf(r),given:giv,consigna:`Metal + hidrógeno. Escribí el hidruro y <b>balanceá</b>. Con metales, el H actúa con −1. ${CONS}`}}
+    else{const r=rxHidNM(rnd(Object.values(NM)));X={rx:[r],target:unkOf(r),consigna:`No metal + hidrógeno. Escribí el hidruro y <b>balanceá</b>. Acá el no metal usa su número <b>negativo</b> y el H actúa con +1. ${CONS}`}}
+  } else {
+    const x=NM[rnd(SALT_X)];
+    if(s==='directa'){const r=rxSalt(e,v,x);X={rx:[r],target:unkOf(r),given:`${cap(e.n)} (${e.sym}) con ${fmtOx(v)} y ${x.n} (${x.sym})`,consigna:`Metal + no metal. Escribí la sal y <b>balanceá</b>. En la sal, el no metal usa su número <b>negativo</b>. ${CONS}`}}
+    else{const r=rxNeutral(e,v,x);X={rx:[r],target:unkOf(r),consigna:`Hidróxido + hidrácido → sal + agua. Escribí la sal y <b>balanceá</b>. ${CONS}`}}
+  }
+  startEx(X);
+}
+function startEx(X){EX=Object.assign({stage:0,hints:{},usedHelp:false,named:false,namedVals:{}},X);renderEx()}
+function eqHTML(r,i,done){
+  let h=`<div class="eq" id="r${i}-eq">`;
+  r.species.forEach((s,j)=>{
+    if(j>0)h+=`<span class="op">${j===r.nR?'→':'+'}</span>`;
+    const coef=`<input class="coef" id="r${i}-c${j}" inputmode="numeric" aria-label="Coeficiente" ${done?`value="${r.coefs[j]}" disabled`:''}>`;
+    const body=s.unk&&!done?`<input class="prod" id="r${i}-p${j}" placeholder="Producto" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Fórmula del producto">`:s.html;
+    h+=`<span class="sp">${coef} ${body}</span>`;
+  });
+  h+='</div>';
+  if(!done)h+=`<span class="prev" id="r${i}-prev" hidden></span>`;
+  return h;
+}
+function renderEx(){
+  const X=EX;let h=`<div class="card"><p class="consigna">${X.consigna}</p>${X.given?`<div class="given">${X.given}</div>`:''}`;
+  X.rx.forEach((r,i)=>{
+    const locked=i>X.stage,done=i<X.stage;
+    h+=`<div class="step${locked?' locked':''}${done?' done':''}" id="st${i}"><div class="st-h"><span class="st-n">${i+1}</span>${STEPT[r.kind]}</div>
+      ${locked?'<p class="consigna">Se desbloquea cuando termines el paso anterior.</p>':eqHTML(r,i,done)}
+      ${!locked&&!done?`<div id="r${i}-out"></div><div class="btns"><button class="btn primary" data-a="check" data-i="${i}">Comprobar</button><button class="btn" data-a="count" data-i="${i}">Contar átomos</button><button class="btn" data-a="show" data-i="${i}">Ver solución</button></div>`:''}
+    </div>`;
+  });
+  const t=X.target,nlock=X.stage<X.rx.length;
+  h+=`<div class="step${nlock?' locked':''}${X.named?' done':''}" id="stN"><div class="st-h"><span class="st-n">${X.rx.length+1}</span>Nombrá ${nlock?'el producto':fHTML(t.parts)}</div>`;
+  if(nlock)h+='<p class="consigna">Se desbloquea cuando la reacción esté bien.</p>';
+  else{
+    h+=`<div class="names">${NOMS.map(([k,l])=>t.names[k]
+      ?`<label class="nf ${k}${X.named?' ok':''}" id="nf-${k}"><span>${l}</span><input id="n-${k}" autocapitalize="off" autocorrect="off" spellcheck="false" ${X.named?`value="${esc(X.namedVals[k]||t.names[k])}" disabled`:''}><small hidden></small></label>`
+      :`<label class="nf ${k} na"><span>${l}</span><input disabled value="No se usa en este caso"></label>`).join('')}</div>`;
+    if(!X.named)h+=`<div id="n-out"></div><div class="btns"><button class="btn primary" data-a="ncheck">Comprobar nombres</button><button class="btn" data-a="nshow">Ver solución</button></div>`;
+  }
+  h+='</div>';
+  if(X.named)h+=`<div class="final">${X.usedHelp?'Listo. Este te costó un poco: probá otro parecido.':'¡Perfecto! Lo resolviste sin ayuda.'}</div>`;
+  h+=`<div class="btns"><button class="btn${X.named?' primary':''}" data-a="next">${X.named?'Siguiente ejercicio':'Saltear, otro ejercicio'}</button></div></div>`;
+  $('#main').innerHTML=h;
+}
+const coefsOf=(r,i)=>r.species.map((s,j)=>{const v=$(`#r${i}-c${j}`).value.trim();return v===''?1:(/^\d+$/.test(v)?+v:NaN)});
+function countTable(r,i,fs){
+  const co=coefsOf(r,i);if(co.some(isNaN))return '<p>Los coeficientes tienen que ser números enteros.</p>';
+  const L=tally(fs.slice(0,r.nR),co.slice(0,r.nR)),Rt=tally(fs.slice(r.nR),co.slice(r.nR));
+  const els=[...new Set([...Object.keys(L),...Object.keys(Rt)])].sort((a,b)=>(a==='O')-(b==='O')||(a==='H')-(b==='H'));
+  return `<div class="count-wrap"><table class="count"><thead><tr><th>Átomo</th><th>Reactivos</th><th>Productos</th><th></th></tr></thead><tbody>${els.map(k=>{const a=L[k]||0,b=Rt[k]||0;return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="${a===b?'y':'n'}">${a===b?'✓':'✗'}</td></tr>`}).join('')}</tbody></table></div>`;
+}
+function out(i,cls,html){$(`#r${i}-out`).innerHTML=`<div class="msg ${cls}">${html}</div>`}
+function checkRx(i){
+  const r=EX.rx[i];
+  $$(`#r${i}-eq .coef, #r${i}-eq .prod`).forEach(x=>x.classList.remove('ok','bad'));
+  const notes=[];
+  for(let j=0;j<r.species.length;j++){
+    const s=r.species[j];if(!s.unk)continue;
+    const pin=$(`#r${i}-p${j}`),res=checkProduct(s.unk,pin.value);
+    if(res.empty){pin.classList.add('bad');out(i,'bad','<p>Falta escribir el producto.</p>');return}
+    if(!res.ok){pin.classList.add('bad');out(i,'bad',`<p><b>El producto no es correcto.</b> ${res.diag}</p><p>Corregilo primero y después balanceá.</p>`);return}
+    pin.classList.add('ok');notes.push(...res.notes);
+  }
+  const co=coefsOf(r,i);
+  if(co.some(x=>isNaN(x)||x<1)){out(i,'bad','<p>Los coeficientes tienen que ser números enteros (1, 2, 3…).</p>');return}
+  const L=tally(r.fs.slice(0,r.nR),co.slice(0,r.nR)),Rt=tally(r.fs.slice(r.nR),co.slice(r.nR));
+  const bad=Object.keys({...L,...Rt}).filter(k=>(L[k]||0)!==(Rt[k]||0));
+  if(bad.length){
+    $$(`#r${i}-eq .coef`).forEach(x=>x.classList.add('bad'));
+    out(i,'bad',`<p><b>El producto está bien${notes.length?' ('+notes.join(' ')+')':''}, pero la ecuación no está balanceada.</b> No coincide: ${bad.join(', ')}.</p>${countTable(r,i,r.fs)}`);return;
+  }
+  const g=co.reduce((a,b)=>gcd(a,b));
+  if(g>1){$$(`#r${i}-eq .coef`).forEach(x=>x.classList.add('bad'));out(i,'bad',`<p><b>Está balanceada, pero se puede simplificar:</b> dividí todos los coeficientes por ${g}.</p>`);return}
+  EX.stage=i+1;renderEx();
+  const msg=document.createElement('div');msg.className='msg ok';msg.innerHTML=`<p><b>¡Bien! Producto correcto y ecuación balanceada.</b>${notes.length?' '+notes.join(' '):''}</p>`;
+  $(`#st${i}`).appendChild(msg);
+  const nx=EX.stage<EX.rx.length?$(`#r${EX.stage}-eq .prod`):$('#n-tr');if(nx)nx.focus({preventScroll:true});
+}
+function hint(i){
+  const r=EX.rx[i],j=r.species.findIndex(s=>s.unk),prodOk=checkProduct(r.species[j].unk,$(`#r${i}-p${j}`).value).ok;
+  const key=prodOk?`b${i}`:`p${i}`,list=prodOk?balanceHints(r):productHints(r),n=EX.hints[key]||0;EX.usedHelp=true;
+  if(n>=list.length){out(i,'hint','<p>Ya te di todas las pistas de este paso. Si no sale, tocá «Ver solución».</p>');return}
+  EX.hints[key]=n+1;
+  out(i,'hint',`<p><b>Pista ${n+1} (${prodOk?'balanceo':'producto'}):</b> ${list[n]}</p>`);
+}
+function showRx(i){
+  const r=EX.rx[i];EX.usedHelp=true;
+  const c1=n=>n>1?n+' ':'';
+  let eq='';r.species.forEach((s,j)=>{if(j>0)eq+=j===r.nR?' → ':' + ';eq+=c1(r.coefs[j])+s.html});
+  out(i,'',`<div class="sol"><span class="eqs">${eq}</span>${productHints(r).map(p=>`<p>${p}</p>`).join('')}<p>Balanceo: ${balanceHints(r)[1]}</p><p>Escribilo vos en los casilleros y tocá «Comprobar».</p></div>`);
+}
+function checkNames(){
+  const t=EX.target;let all=true;const vals={};
+  NOMS.forEach(([k])=>{
+    if(!t.names[k])return;
+    const w=$('#nf-'+k),sm=$('small',w),val=$('#n-'+k).value,r=checkName(t,k,val);vals[k]=val;
+    w.classList.remove('ok','bad');
+    if(r.empty){w.classList.add('bad');sm.innerHTML='Falta completar.';all=false}
+    else if(r.ok){w.classList.add('ok');sm.innerHTML=r.notes.join(' ')||'Bien'}
+    else{w.classList.add('bad');sm.innerHTML=r.diag||'No es ese nombre.';all=false}
+    sm.hidden=false;
+  });
+  if(all){EX.named=true;EX.namedVals=vals;solved(!EX.usedHelp);renderEx()}
+  else $('#n-out').innerHTML='';
+}
+function nameHint(){
+  const t=EX.target,w=namesWhy(t),n=EX.hints.n||0;EX.usedHelp=true;
+  const list=NOMS.filter(([k])=>t.names[k]).map(([k])=>`<b>${k==='tr'?'T':k==='st'?'S':'A'}:</b> ${w[k]}`);
+  if(n>=list.length){$('#n-out').innerHTML='<div class="msg hint"><p>No hay más pistas. Tocá «Ver solución» si no sale.</p></div>';return}
+  EX.hints.n=n+1;$('#n-out').innerHTML=`<div class="msg hint"><p>${list.slice(0,n+1).join('</p><p>')}</p></div>`;
+}
+function showNames(){
+  const t=EX.target,w=namesWhy(t);EX.usedHelp=true;
+  $('#n-out').innerHTML=`<div class="sol"><span class="eqs">${fHTML(t.parts)}</span>${NOMS.map(([k,l])=>`<p><b>${l}:</b> ${t.names[k]||'no se usa'}. ${w[k]}</p>`).join('')}<p>Escribilos vos en los casilleros y tocá «Comprobar nombres».</p></div>`;
+}
+
+/* ===== nombre y fórmula ===== */
+const NTYPES=[['oxido','Óxidos'],['hidroxido','Hidróxidos'],['hid','Hidruros'],['sal','Sales binarias']];
+const NT=Object.assign({oxido:1,hidroxido:1,hid:1,sal:1},store.get('ntypes',{}));
+const typeOf=c=>c.tipo==='hidM'||c.tipo==='hidNM'?'hid':c.tipo;
+let NQ=null,nStreak=0;
+const NOMTAG={tr:'T · Tradicional',st:'S · Stock',si:'A · Atomicidad'};
+function typeLine(c){
+  return {oxido:'Es un óxido: metal + oxígeno. El O vale −2.',hidroxido:'Es un hidróxido: metal + OH. El OH vale −1.',hidM:'Es un hidruro metálico: metal + H. Con metales el H vale −1.',hidNM:'Es un hidruro no metálico: H + no metal. El H vale +1 y el no metal usa su negativo.',sal:'Es una sal binaria: metal + no metal, sin oxígeno. El no metal usa su negativo.'}[c.tipo];
+}
+function nmLine(x){const G=GROUP[x.sym];return `El ${x.n} está en el grupo ${G}: ${G%10} − 8 = <b>−${x.neg}</b>.`}
+function metalLine(c,nom){
+  const e=c.e,G=GROUP[e.sym];
+  if(nom==='st')return `El (${ROM[c.v]}) te dice el número: ${e.sym} es <b>+${c.v}</b>.`;
+  if(e.ox.length===1)return `${cap(e.art)} ${e.n} tiene un solo número: <b>+${c.v}</b>${G?` (grupo ${G})`:''}.`;
+  return `-oso es el menor y -ico el mayor. ${cap(e.art)} ${e.n} tiene +${e.ox[0]} y +${e.ox[1]} → acá <b>+${c.v}</b>.`;
+}
+function crossLine(c){
+  const e=c.e;
+  if(c.tipo==='oxido')return `Cruzá +${c.v} y −2 sin el signo${c.g>1?`: queda ${e.sym}<sub>2</sub>O<sub>${c.v}</sub> y se simplifica dividiendo por ${c.g}`:''}.`;
+  if(c.tipo==='hidroxido')return `+${c.v} con OH −1: el ${e.sym} queda con 1 y van ${c.v} OH${c.v>1?' entre paréntesis':''}.`;
+  if(c.tipo==='hidM')return `+${c.v} con H −1: el ${e.sym} queda con 1 y van ${c.v} H. Primero el metal.`;
+  if(c.tipo==='hidNM')return `H +1 con ${c.x.sym} −${c.h}: van ${c.h} H. ${c.hFirst?'Con los grupos 16 y 17 el H va primero.':'Con los grupos 14 y 15 el no metal va primero.'}`;
+  return `Cruzá +${c.v} y −${c.w} sin el signo${c.g>1?`: queda ${e.sym}<sub>${c.w}</sub>${c.x.sym}<sub>${c.v}</sub> y se simplifica dividiendo por ${c.g}`:''}. Primero el metal.`;
+}
+function fromFormula(c){
+  const e=c.e;
+  if(c.tipo==='oxido')return `${c.b} O × (−2) = −${2*c.b}${c.a>1?`, repartido en ${c.a} ${e.sym}`:''} → ${e.sym} es <b>+${c.v}</b>.`;
+  if(c.tipo==='hidroxido')return `${c.v} OH × (−1) = −${c.v} → ${e.sym} es <b>+${c.v}</b>.`;
+  if(c.tipo==='hidM')return `${c.v} H × (−1) = −${c.v} → ${e.sym} es <b>+${c.v}</b>.`;
+  if(c.tipo==='hidNM')return `Con hidrógeno el ${c.x.n} usa su negativo: grupo ${GROUP[c.x.sym]} → <b>−${c.h}</b>. Lleva ${c.h} H.`;
+  return `${nmLine(c.x)} ${c.q} × (−${c.w}) = −${c.q*c.w}${c.p>1?`, repartido en ${c.p} ${e.sym}`:''} → ${e.sym} es <b>+${c.v}</b>.`;
+}
+function nfHints(c,nom){
+  const h=[typeLine(c)];
+  if(nom==='si'){h.push('En atomicidad los prefijos te dicen cuántos átomos hay de cada uno (di 2, tri 3, tetra 4, penta 5).');h.push(`Hay que escribir: ${c.parts.map(p=>p.g?'OH':p.s).join(' y ')}${c.tipo==='hidNM'&&c.hFirst?' (el H va primero)':''}.`);return h}
+  if(c.tipo==='hidNM'){if(c.special)h.push(`${cap(c.names.tr)} es el hidruro del ${c.x.n}.`);h.push(nmLine(c.x));h.push(crossLine(c));return h}
+  h.push(metalLine(c,nom));
+  if(c.tipo==='sal')h.push(`${cap(c.x.uro)} viene del ${c.x.n}. ${nmLine(c.x)}`);
+  h.push(crossLine(c));
+  return h;
+}
+function fnRule(c,nom){
+  const e=c.e,uro=c.tipo==='sal'?`El no metal termina en -uro (${c.x.n} → ${c.x.uro}). `:'';
+  if(c.tipo==='hidNM'){if(nom==='tr')return c.special?'Este hidruro tiene un nombre propio que se memoriza.':'Disuelto en agua se nombra «ácido» + raíz del no metal + «-hídrico».';return 'No metal terminado en -uro (o «hidruro de» para C, Si, N, P, As) y prefijo según la cantidad de H.'}
+  if(nom==='st')return `${uro}Va «de» + metal y el número de oxidación del metal en romanos entre paréntesis.`;
+  if(nom==='si')return `${uro}Usá prefijos según la cantidad de átomos (di 2, tri 3, tetra 4, penta 5). Un solo átomo de metal no lleva prefijo.`;
+  return uro+(e.ox.length===1?`${cap(e.art)} ${e.n} tiene un solo número: se dice «… de ${e.n}».`:`${cap(e.art)} ${e.n} usa -oso con +${e.ox[0]} y -ico con +${e.ox[1]}.`);
+}
+function fnHints(c,nom){
+  const nm=c.names[nom],ws=nm.split(' ');
+  const start=ws.length>1?`${ws[0]} ${ws[1].slice(0,Math.min(2,ws[1].length))}…`:nm.slice(0,Math.ceil(nm.length/2))+'…';
+  return [typeLine(c),nom==='si'?`Contá los átomos de cada elemento en la fórmula.`:`Sacá los números de oxidación: ${fromFormula(c)}`,fnRule(c,nom),`Empieza así: «${start}»`];
+}
+function pickCompound(dir){
+  const ts=NTYPES.map(t=>t[0]).filter(t=>NT[t]);if(!ts.length)return null;
+  for(let k=0;k<50;k++){
+    const t=rnd(ts),pool=ALL.filter(c=>typeOf(c)===t),c=rnd(pool),noms=['tr','st','si'].filter(n=>c.names[n]);
+    if(NQ&&NQ.c.key===c.key)continue;
+    return {c,nom:rnd(noms)};
+  }
+  return null;
+}
+function newNombre(){
+  const dir=SUB.nombres,pk=pickCompound(dir);
+  const toggles=`<div class="toggles-row">${NTYPES.map(([k,l])=>`<button class="tg" data-nt="${k}" aria-pressed="${!!NT[k]}">${l}</button>`).join('')}</div>`;
+  if(!pk){$('#main').innerHTML=`<div class="card">${toggles}<p class="consigna">Elegí al menos un tipo de compuesto.</p></div>`;return}
+  NQ={...pk,dir,hints:0,done:false,missed:false};
+  const c=NQ.c,nom=NQ.nom;
+  const ask=dir==='nf'
+    ?`<p class="consigna">Escribí la <b>fórmula</b> de:</p><span class="ntag ${nom}">${NOMTAG[nom]}</span><div class="nq-name">${c.names[nom]}</div>`
+    :`<p class="consigna">Escribí el <b>nombre</b> en <span class="ntag ${nom}">${NOMTAG[nom]}</span></p><div class="gq-show">${fHTML(c.parts)}</div>`;
+  $('#main').innerHTML=`<div class="card">${toggles}${ask}
+   <div class="gq-row"><input id="nq-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${dir==='nf'?'Escribí la fórmula':'Escribí el nombre'}" aria-label="Tu respuesta"><button class="btn primary" data-a="nqcheck">Comprobar</button></div>
+   <span class="prev" id="nq-prev" hidden></span>
+   <div id="nq-out"></div>
+   <div class="btns" id="nq-btns"><button class="btn" data-a="nqshow">Ver solución</button><button class="btn" data-a="nqnext">Otro</button></div>
+   <p class="consigna">Seguidas: <b id="nq-stk">${nStreak}</b></p></div>`;
+  const inp=$('#nq-in');if(inp&&!reduceMotion())inp.focus({preventScroll:true});
+}
+function nqExplain(){
+  const c=NQ.c;
+  return `<div class="sol"><span class="eqs">${fHTML(c.parts)}</span>
+    <p>${typeLine(c)} ${NQ.dir==='nf'&&!(c.tipo==='hidNM')?metalLine(c,NQ.nom==='si'?'tr':NQ.nom):fromFormula(c)}${c.tipo==='sal'&&NQ.dir==='nf'?' '+nmLine(c.x):''}</p>
+    <p>${crossLine(c)}</p>
+    <div class="tsa">${NOMS.map(([k,l])=>`<div style="--c:var(--n-${k})"><b>${l}</b>${c.names[k]||'no se usa'}</div>`).join('')}</div></div>`;
+}
+function nqFinish(clean,head){
+  NQ.done=true;
+  if(clean){nStreak++;solved(true)}else{nStreak=0;solved(false)}
+  $('#nq-stk').textContent=nStreak;
+  $('#nq-out').innerHTML=`${head}${nqExplain()}`;
+  $('#nq-in').disabled=true;$$('#nq-btns [data-a="nqhint"], #nq-btns [data-a="nqshow"]').forEach(b=>b.disabled=true);
+  const nx=$('#nq-btns [data-a="nqnext"]');nx.classList.add('primary');nx.textContent='Siguiente';nx.focus({preventScroll:true});
+}
+function nqCheck(){
+  if(NQ.done)return;const v=$('#nq-in').value,c=NQ.c;
+  const r=NQ.dir==='nf'?checkProduct(c,v):checkName(c,NQ.nom,v);
+  if(r.empty){$('#nq-out').innerHTML='<div class="msg bad"><p>Escribí tu respuesta primero.</p></div>';return}
+  if(r.ok){nqFinish(!NQ.missed&&!NQ.hints,`<div class="msg ok"><p><b>${rnd(['¡Bien!','¡Exacto!','¡Eso es!','¡Perfecto!'])}</b>${r.notes.length?' '+r.notes.join(' '):''}</p></div>`);return}
+  NQ.missed=true;nStreak=0;$('#nq-stk').textContent=0;
+  $('#nq-out').innerHTML=`<div class="msg bad"><p><b>No es correcto.</b> ${r.diag||(NQ.dir==='nf'?'Revisá los números de oxidación y el cruce.':'Revisá la regla de esta nomenclatura.')}</p><p>Corregilo y volvé a comprobar.</p></div>`;
+}
+function nqHint(){
+  if(NQ.done)return;const list=NQ.dir==='nf'?nfHints(NQ.c,NQ.nom):fnHints(NQ.c,NQ.nom);
+  if(NQ.hints>=list.length){$('#nq-out').innerHTML='<div class="msg hint"><p>No hay más pistas. Tocá «Ver solución» si no sale.</p></div>';return}
+  NQ.hints++;$('#nq-out').innerHTML=`<div class="msg hint">${list.slice(0,NQ.hints).map((t,i)=>`<p><b>Pista ${i+1}:</b> ${t}</p>`).join('')}</div>`;
+}
+
+/* ===== clasificar ===== */
+let CL=null,clStreak=0;
+function newClas(){
+  const pool=[];
+  METALS.forEach(e=>e.ox.forEach(v=>pool.push({f:fHTML(oxideOf(e,v).parts),t:'b',sym:e.sym})));
+  Object.values(NM).forEach(x=>x.ox.forEach(v=>pool.push({f:fHTML(oxideOf(x,v).parts),t:'a',sym:x.sym})));
+  CL=rnd(pool);
+  $('#main').innerHTML=`<div class="card"><p class="consigna">¿Este óxido es <b>básico</b> o <b>ácido</b>?</p><div class="cls-show">${CL.f}</div>
+  <div class="cls-btns"><button class="btn b1" data-a="cl" data-t="b">Básico</button><button class="btn b2" data-a="cl" data-t="a">Ácido</button></div>
+  <div id="cl-out"></div><p class="consigna">Seguidas: <b id="cl-stk">${clStreak}</b></p></div>`;
+}
+function answerClas(t){
+  if(CL.answered)return;CL.answered=true;
+  const ok=t===CL.t;clStreak=ok?clStreak+1:0;
+  const why=CL.t==='b'?`<b>${CL.sym}</b> es un metal → óxido <b>básico</b>. Con agua forma un hidróxido.`:`<b>${CL.sym}</b> es un no metal → óxido <b>ácido</b>.`;
+  $('#cl-out').innerHTML=`<div class="msg ${ok?'ok':'bad'}"><p><b>${ok?'¡Bien!':'No.'}</b> ${why}</p></div><div class="btns" style="margin-top:8px"><button class="btn primary" data-a="clnext">Otro</button></div>`;
+  $('#cl-stk').textContent=clStreak;
+  $$('[data-a="cl"]').forEach(b=>b.disabled=true);
+  if(ok&&clStreak&&clStreak%10===0)confetti();
+}
+
+/* ===== navegación ===== */
+const TABS={nombres:{subs:[['nf','Nombre → fórmula'],['fn','Fórmula → nombre']]},hidroxidos:{subs:[['agua','Óxido + agua'],['metal','Desde el metal']]},hidruros:{subs:[['metal','Metálicos'],['nometal','No metálicos']]},sales:{subs:[['directa','Metal + no metal'],['neutral','Hidróxido + ácido']]},clas:{}};
+const SUB=Object.assign({nombres:'nf',hidroxidos:'agua',hidruros:'metal',sales:'directa'},store.get('sub',{}));
+let VIEW='hidroxidos';
+function renderSub(){
+  const t=TABS[VIEW],el=$('#sub');
+  if(!t.subs){el.innerHTML='';return}
+  el.innerHTML=`<div class="subnav" role="group" aria-label="Tipo de ejercicio">${t.subs.map(([k,l])=>`<button data-sub="${k}" aria-pressed="${SUB[VIEW]===k}">${l}</button>`).join('')}</div>`;
+}
+function renderView(){
+  if(VIEW==='nombres')newNombre();
+  else if(VIEW==='clas')newClas();
+  else newExercise();
+}
+function show(v){VIEW=v;store.set('view',v);$$('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.v===v));renderSub();renderView()}
+$$('.tab').forEach(t=>t.addEventListener('click',()=>show(t.dataset.v)));
+$('#sub').addEventListener('click',ev=>{const b=ev.target.closest('[data-sub]');if(!b)return;SUB[VIEW]=b.dataset.sub;store.set('sub',SUB);renderSub();renderView()});
+$('#main').addEventListener('click',ev=>{
+  const tg=ev.target.closest('[data-nt]');
+  if(tg){const k=tg.dataset.nt;NT[k]=NT[k]?0:1;store.set('ntypes',NT);NQ=null;newNombre();return}
+  const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=+b.dataset.i;
+  if(a==='check')checkRx(i);
+  else if(a==='count'){const r=EX.rx[i],fs=r.species.map((s,j)=>s.unk?$(`#r${i}-p${j}`).value:s.f);out(i,'',fs.every(f=>parseFormula(f))?countTable(r,i,fs):'<p>Escribí primero el producto (con mayúsculas, por ejemplo NaCl) para poder contar.</p>')}
+  else if(a==='hint')hint(i);else if(a==='show')showRx(i);
+  else if(a==='ncheck')checkNames();else if(a==='nhint')nameHint();else if(a==='nshow')showNames();
+  else if(a==='next')newExercise();
+  else if(a==='cl')answerClas(b.dataset.t);else if(a==='clnext')newClas();
+  else if(a==='nqcheck')nqCheck();else if(a==='nqhint')nqHint();else if(a==='nqnext')newNombre();
+  else if(a==='nqshow'){if(!NQ.done){NQ.missed=true;nqFinish(false,'')}}
+});
+$('#main').addEventListener('input',ev=>{
+  if(ev.target.id==='nq-in'&&NQ&&NQ.dir==='nf'){const pv=$('#nq-prev'),t=ev.target.value;if(t.trim()&&!/\s/.test(t.trim())){pv.innerHTML=`Se lee: <b>${esc(subNorm(t)).replace(/(\d+)/g,'<sub>$1</sub>')}</b>`;pv.hidden=false}else pv.hidden=true;return}
+  const m=ev.target.id.match(/^r(\d)-p\d$/);if(!m)return;const pv=$(`#r${m[1]}-prev`),t=ev.target.value;
+  if(t.trim()&&!/\s/.test(t.trim())){pv.innerHTML=`Se lee: <b>${esc(subNorm(t)).replace(/(\d+)/g,'<sub>$1</sub>')}</b>`;pv.hidden=false}else pv.hidden=true;
+});
+$('#main').addEventListener('keydown',ev=>{
+  if(ev.key!=='Enter')return;const t=ev.target;
+  if(t.id==='nq-in'){ev.preventDefault();NQ.done?newNombre():nqCheck();return}
+  const m=t.id&&t.id.match(/^r(\d)-/);if(m){ev.preventDefault();checkRx(+m[1]);return}
+  if(t.id&&t.id.startsWith('n-')){ev.preventDefault();checkNames()}
+});
+
+/* ===== confeti ===== */
+function confetti(){
+  if(reduceMotion())return;const cv=$('#confetti'),ctx=cv.getContext&&cv.getContext('2d');if(!ctx)return;
+  const W=cv.width=innerWidth,H=cv.height=innerHeight,cs=getComputedStyle(document.documentElement);
+  const cols=['--accent','--flame','--oxy','--hyd','--n-st'].map(v=>cs.getPropertyValue(v).trim()||'#0B7A6B');
+  const P=Array.from({length:120},()=>({x:W/2+(Math.random()-.5)*W*.3,y:H*.35,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,r:Math.random()*6+4,c:rnd(cols),a:Math.random()*6,va:(Math.random()-.5)*.3}));
+  let f=0;(function step(){ctx.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);ctx.restore()});
+    if(++f<140)requestAnimationFrame(step);else ctx.clearRect(0,0,W,H)})();
+}
+
+/* ===== inicio ===== */
+hud();
+{
+  const hv=(location.hash||'').slice(1),sv=store.get('view','');
+  VIEW=TABS[hv]?hv:TABS[sv]?sv:'nombres';
+  $$('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.v===VIEW));renderSub();
+  if(VIEW==='hidroxidos'&&SUB.hidroxidos==='agua'&&!sv)startEx(exWater(EL.Al,3));else renderView();
+}
+</script>
+<script>
+/* Si hay una versión más nueva publicada, recarga la página salteando la caché */
+(function(){
+  var meta=document.querySelector('meta[name="app-version"]');
+  if(!meta||!window.fetch)return;
+  var actual=meta.content;
+  fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'})
+    .then(function(r){return r.ok?r.text():''})
+    .then(function(t){
+      var m=t.match(/name="app-version" content="([^"]+)"/);
+      if(!m||m[1]===actual)return;
+      var u=new URL(location.href);
+      if(u.searchParams.get('v')===m[1])return;
+      u.searchParams.set('v',m[1]);
+      location.replace(u.toString());
+    })
+    .catch(function(){});
+})();
+</script>
+</body>
+</html>
